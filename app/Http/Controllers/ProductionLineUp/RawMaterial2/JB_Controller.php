@@ -1,0 +1,77 @@
+<?php
+
+namespace App\Http\Controllers\ProductionLineUp\RawMaterial;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class JB_Controller extends Controller
+{
+    public  static function PermittedMenuList($sessionId){
+      //Menu Permission
+      $res = DB::table('prod_menu_laravel')
+      ->leftJoin('prod_menu_acc_laravel', 'prod_menu_laravel.id', '=', 'prod_menu_acc_laravel.menu_id')
+      ->where('prod_menu_acc_laravel.emp_id', '=', $sessionId)
+      ->where('prod_menu_acc_laravel.accessType', '=', 'yes')
+      ->select('prod_menu_laravel.*', 'prod_menu_acc_laravel.accessType')
+      ->get();
+      
+      return $res;
+    }
+
+    public Function availRawMat(Request $request){
+      $data['menu'] = 'jb-availRawMat';
+
+      $sql = "SELECT 
+            psml.*,ninetydeg.ninetydeg_barcode as barCode,tbl_process_stage.stage_pos,COALESCE(mat1.material_name,'NA') AS bomMatName,mml.title AS matName
+            FROM tbl_factory_ninetydeg_laravel AS ninetydeg
+            LEFT JOIN tbl_factory_jb_laravel AS jb
+            ON ninetydeg.ninetydeg_id = jb.jb_QC
+            LEFT JOIN tbl_factory_production_setup_material_laravel AS psml 
+                ON psml.batchNo = ninetydeg.ninetydeg_batchNo
+           LEFT JOIN tbl_process_stage ON psml.useStage = tbl_process_stage.stage_name
+           LEFT JOIN prj_material AS mat1 ON mat1.id = psml.bomMat
+           LEFT JOIN tbl_factory_material_master_laravel AS mml ON mml.id = psml.material
+            WHERE (
+            jb.jb_QC IS NULL AND (psml.useStage IS NULL OR tbl_process_stage.stage_pos <=4)
+        ) 
+        AND ninetydeg.status = '1'  
+        ORDER BY `ninetydeg`.`ninetydeg_barCode` DESC";
+        
+      // dd($sql);
+      $data['AllLists'] = DB::select($sql);
+
+      $data['pageTitle'] = 'Pending Raw Material at Junction Box Stage List Details';
+      $data['reportTitle'] = 'Pending Raw Material at Junction Box Stage';
+        
+      $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
+      return view('ProductionLineUp.RawMaterial.raw-material-pending-report', $data);
+    
+    }
+
+    public Function consumeRawMat(Request $request){
+      $data['menu'] = 'jb-consumeRawMat';
+
+      $sql = "SELECT 
+            psml.*,jb.jb_barcode as barCode,jb.status,tbl_process_stage.stage_pos,COALESCE(mat1.material_name,'NA') AS bomMatName,mml.title AS matName
+            FROM tbl_factory_jb_laravel AS jb
+            LEFT JOIN tbl_factory_production_setup_material_laravel AS psml 
+                ON psml.batchNo = jb.jb_batchNo
+           LEFT JOIN tbl_process_stage ON psml.useStage = tbl_process_stage.stage_name
+           LEFT JOIN prj_material AS mat1 ON mat1.id = psml.bomMat
+           LEFT JOIN tbl_factory_material_master_laravel AS mml ON mml.id = psml.material
+            WHERE (psml.useStage IS NULL OR tbl_process_stage.stage_pos <=4)
+        ORDER BY jb.jb_barcode DESC";
+        
+      // dd($sql);
+      $data['AllLists'] = DB::select($sql);
+
+      $data['pageTitle'] = 'Consumed Raw Material at Junction Box Stage List Details';
+      $data['reportTitle'] = 'Consumed Raw Material at Junction Box Stage';
+        
+      $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
+      return view('ProductionLineUp.RawMaterial.raw-material-consumed-report', $data);
+    
+    }
+}
