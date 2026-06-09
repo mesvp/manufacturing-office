@@ -1,0 +1,229 @@
+:root {
+  --gradient-start-1-start: #E6F9FF;
+  --gradient-start-1-end: #FEFFFF;
+  --gradient-start-2-start: #fffaf0;
+  --gradient-start-2-end: #FFFEFD;
+  --gradient-start-3-start: #E6EBFF;
+  --gradient-start-3-end: #FFFFFF;
+  --gradient-start-4-start: #E8FFF5;
+  --gradient-start-4-end: #FFFFFF;
+  --gradient-start-5-start: #FFEEEE;
+  --gradient-start-5-end: #FFFCFC;
+  --border-radius-5: 5px;
+  --logo-clr: #666cff;
+  --logo-clr-100: #e8e9ff;
+  --logo-clr-200: #FDE5D9;
+  --logo-clr-300: #d2d4ff;
+  --logo-clr-400: #8e92e7;
+  --weight-100: 100;
+  --weight-200: 200;
+  --weight-300: 300;
+  --weight-400: 400;
+  --weight-500: 500;
+  --weight-600: 600;
+  --weight-700: 700;
+  --weight-800: 800;
+  --weight-900: 900;
+}
+
+.bg-gradient-start-1 {
+  background: linear-gradient(to right, var(--gradient-start-1-start), var(--gradient-start-1-end));
+}
+
+.bg-gradient-start-2 {
+  background: linear-gradient(to right, var(--gradient-start-2-start), var(--gradient-start-2-end));
+}
+
+.bg-gradient-start-3 {
+  background: linear-gradient(to right, var(--gradient-start-3-start), var(--gradient-start-3-end));
+}
+
+.bg-gradient-start-4 {
+  background: linear-gradient(to right, var(--gradient-start-4-start), var(--gradient-start-4-end));
+}
+.bg-gradient-start-5 {
+  background: linear-gradient(to right, var(--gradient-start-5-start), var(--gradient-start-5-end));
+}
+
+.captcha {
+    width: 50%;
+    background: yellow;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+
+/*datatables css */
+/* .dt-button-collection {
+  height: 300px;
+  overflow-y: auto;
+}
+.dt-button-collection .dt-button.buttons-columnVisibility{
+  display: block;
+  padding: 0.35rem 1rem;
+  color: gray;
+  width: 100%;
+  background-color: white;
+  border: 1px solid #e4e6ff;
+  text-align: left;
+  font-size: 14px;
+}
+.dt-button-collection .dt-button.buttons-columnVisibility.active{
+  background-color: #dbdeff;
+  color: #666cff;
+}
+.dt-button-collection::-webkit-scrollbar {
+  width: 2px;
+}
+.dt-button-collection::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.dt-button-collection::-webkit-scrollbar-thumb {
+  background:  var(--bs-indigo);
+} */
+/*datatables css */
+
+
+/*datatables css Deena */
+    .dataTables_filter, .dataTables_paginate {
+        float: right;
+    }
+
+    .dataTables_length label,
+    .dataTables_filter label {
+        display: inline-flex;
+        align-items: center;
+    }
+    .dataTables_length .form-select, .dataTables_length .form-control, .dataTables_filter .form-select, .dataTables_filter .form-control {
+        height: 35px;
+        margin: 0 0 0 10px;
+    }
+    .dataTables_length, .dataTables_info {
+        float: left;
+        margin-right: 30px;
+    }
+    .btn-group {
+        border: unset !important;
+    }
+
+
+    .btn-group .btn.btn-secondary {
+        position: relative;
+        padding-left: 30px;
+        margin-right: 10px;
+        border-radius: var(--border-radius-5) !important;
+        background-color: var(--logo-clr);
+        border-color: var(--logo-clr-400);
+        font-weight: var(--weight-600);
+        font-size: var(--font-14);
+    }
+
+    .btn-group .btn.btn-secondary::before {
+        position: absolute;
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        -webkit-font-smoothing: antialiased;
+        display: inline-block;
+        font-style: normal;
+        font-variant: normal;
+        text-rendering: auto;
+        line-height: 1;
+        left: 10px;
+        top: 9px;
+        font-size: 14px;
+    }
+
+    .btn-group .btn.btn-secondary.buttons-copy::before {
+        content: "\f0c5";
+    }
+
+    .btn-group .btn.btn-secondary.buttons-excel::before {
+        content: "\f1c3";
+    }
+
+    .btn-group .btn.btn-secondary.buttons-pdf::before {
+        content: "\f1c1";
+    }
+
+    .btn-group .btn.btn-secondary.buttons-print::before {
+        content: "\f02f";
+    }
+
+    .btn-group .btn.btn-secondary.buttons-colvis {
+        border-radius: var(--border-radius-5) !important;
+    }
+
+    .btn-group .btn.btn-secondary.buttons-colvis::before {
+        content: "\f0b0";
+    }
+
+    .dataTables_length, .dataTables_info {
+        float: left;
+        margin-right: 30px;
+    }
+
+    .dt-button-collection .dropdown-menu {
+        padding: 0 !important;
+    }
+
+    .dt-button-collection .dropdown-item.buttons-columnVisibility {
+        border-bottom: 1px solid var(--logo-clr-300);
+        transition: var(--transition-nrml);
+    }
+
+    .dt-button-collection .dropdown-item.buttons-columnVisibility:last-child {
+        border: unset;
+    }
+
+    .dt-button-collection .dropdown-item.buttons-columnVisibility:active {
+        background-color: var(--logo-clr-100);
+    }
+
+    .dt-button-collection .dropdown-item.buttons-columnVisibility.active {
+        color: var(--logo-clr);
+        background-color: var(--logo-clr-100);
+    }
+
+    .dt-button-collection .dropdown-item.buttons-columnVisibility:hover {
+        background-color: var(--logo-clr-200);
+    }
+
+    .dataTables_wrapper {
+        margin-bottom: 50px;
+    }
+
+    .dataTables_wrapper .dt-button-collection .dropdown-item.buttons-columnVisibility.active::before {
+        content: "\f14a";
+        font-family: 'Font Awesome 5 Free';
+        font-size: 1.3em;
+        color: #666cff;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+    .dataTables_wrapper .dt-button-collection .dropdown-item.buttons-columnVisibility::before {
+        content: "\f096";
+        font-family: "Font Awesome 6 Pro";
+        font-size: 1.3em;
+        color: #666cff;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    #countrymaster_pills .nav-link {
+        font-weight: var(--weight-700);
+     }
+
+    #countrymaster_pills .nav-link:focus, #countrymaster_pills .nav-link{
+        --bs-nav-link-hover-color: var(--logo-clr);
+
+        background-color: var(--logo-clr-100);
+    }
+    
+    .dropdown-menu {
+       flex-direction: column;
+        position: absolute;
+        box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.1);
+        max-height: 287px;
+        overflow: auto;
+    }
