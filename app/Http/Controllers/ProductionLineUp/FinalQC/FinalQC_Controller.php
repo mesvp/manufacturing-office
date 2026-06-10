@@ -219,7 +219,7 @@ class FinalQC_Controller extends Controller
       return view('ProductionLineUp.FinalQC.all-list', $data);
   }
 
-  public function add()
+    public function add()
     {
         $data['menu'] = 'final-qc';
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
@@ -370,14 +370,159 @@ class FinalQC_Controller extends Controller
             return redirect()->back()->with('error', 'Please correct the errors before submitting the form.');
         } else {
             
-            $Bexists = DB::table('tbl_factory_bushing_laravel')
-            ->where('bushing_barCode', $request->input('barCode'))
-            ->where('bushing_batchNo', $request->input('batchNo'))
+            
+            $demoId = date('YmdHis');
+        
+            //Bushing Auto Entry
+            $exists = DB::table('tbl_factory_bushing_laravel')
+            ->where('bushing_barCode', request()->input('barCode'))
             ->exists();
-            $PreExists = DB::table('tbl_factory_jb_laravel')
-            ->where('jb_barcode', $request->input('barCode'))
-            ->where('jb_batchNo', $request->input('batchNo'))
-            ->exists(); 
+            if ($exists == false) {
+                $data = array(
+                'bushing_id' => $demoId,
+                'bushing_date' => date('d-m-Y'),
+                'bushing_time' => date('H:i:s'),
+                'bushing_operator' => request()->input('operator'),
+                'bushing_batchNo' => request()->input('batchNo'),
+                'bushing_incherge' => request()->input('incharge'),
+                'bushing_shift' => request()->input('shift'),
+                'bushing_plant' => request()->input('plant'),
+                'bushing_logo' => 'Yes',
+                'bushing_hasDamage' => 'No',
+                'bushing_rfid' => request()->input('rfid'),
+                'bushing_barCode' => request()->input('barCode'),
+                'created_by' => request()->session()->get('empId')
+                );
+
+                $res = Bushing_Model::create($data);
+
+                $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
+
+                foreach ($materials as $material) {
+                    $data = array(
+                        'bushingId' => $demoId,
+                        'prd_matId' => $material['material'],
+                        'status' => 'Yes'
+                    );
+
+                    BushingMaterial_Model::create($data);
+                }
+
+                
+            }
+
+            //ELQC Auto Entry
+            $exists = DB::table('tbl_factory_el_qc_laravel')
+            ->where('elqc_barcode', request()->input('barCode'))
+            ->exists();
+            if ($exists == false) {
+
+                $data = array(
+                    'elqc_id'       => $demoId,
+                    'elqc_date'     => date('d-m-Y'),
+                    'elqc_time'     => date('H:i:s'),
+                    'elqc_operator' => $request->input('operator'),
+                    'elqc_source'   => 'Layup',
+                    'elqc_bushingNo' => $bushId,
+                    'elqc_batchNo'  => $request->input('batchNo'),
+                    'elqc_incharge' => $request->input('incharge'),
+                    'elqc_shift'    => $request->input('shift'),
+                    'elqc_plant'    => $request->input('plant'),
+                    'status'        => '1',
+                    'rwrk_status'   => '0',
+                    'elqc_rfid'     => $request->input('rfid'),
+                    'elqc_barcode'  => $request->input('barCode'),
+                    'created_by'    => $request->session()->get('empId')
+                );
+
+                $res = EL_QC::create($data);
+
+                EL_QC_History::create([
+                    'el_qc_id'   => $demoId,
+                    'action'     => 'Raised',
+                    'ip_address' => $this->getUserIP(),
+                    'created_by' => $request->session()->get('empId')
+                ]);
+                
+            }
+
+            //Ninetydegree QC Auto Entry
+            $exists = DB::table('tbl_factory_ninetydeg_laravel')
+            ->where('ninetydeg_barcode', $request->input('barCode'))
+            ->exists();
+            if ($exists == false) {
+            
+                $data = array(
+                    'ninetydeg_id'          => $demoId,
+                    'ninetydeg_date'        => date('d-m-Y'),
+                    'ninetydeg_time'        => date('H:i:s'),
+                    'ninetydeg_operator'    => $request->input('operator'),
+                    'ninetydeg_source'      => 'ELQC',
+                    'ninetydeg_laminatorNo' => $demoId,
+                    'ninetydeg_batchNo'     => $request->input('batchNo'),
+                    'ninetydeg_incharge'    => $request->input('incharge'),
+                    'ninetydeg_cycle_no'    => '1',
+                    'ninetydeg_shift'       => $request->input('shift'),
+                    'ninetydeg_plant'       => $request->input('plant'),
+                    'status'                => '1',
+                    'rwrk_status'           => '0',
+                    'ninetydeg_pDefectRsn'  => 'No Damage',
+                    'ninetydeg_rfid'        => $request->input('rfid'),
+                    'ninetydeg_barcode'     => $request->input('barCode'),
+                    'created_by'            => $request->session()->get('empId')
+                );
+
+                $res = NinetyDeg_Model::create($data);
+
+                NinetyDegHist_Model::create([
+                    'ninetydeg_id' => $demoId,
+                    'action'       => 'Raised',
+                    'ip_address'   => $this->getUserIP(),
+                    'created_by'   => auth()->id()
+                ]);
+
+            }
+
+            //Junctionbox Auto Entry
+            $exists = DB::table('tbl_factory_fqc_laravel')
+            ->where('fqc_barcode', $request->input('barCode'))
+            ->exists();
+            if($exists == false){
+
+                $data = array(
+                    'jb_id' => $demoId,
+                    'jb_date' => date('d-m-Y'),
+                    'jb_time' => date('H:i:s'),
+                    'jb_operator' => $request->input('operator'),
+                    'jb_source' => '90 deg QC',
+                    'jb_QC' => $demoId,
+                    'jb_batchNo' => $request->input('batchNo'),
+                    'jb_incharge' => $request->input('incharge'),
+                    'jb_cycle_no' => '1',
+                    'jb_shift' => $request->input('shift'),
+                    'jb_plant' => $request->input('plant'),
+                    'status' => '1',
+                    'jb_pDefectRsn' => 'No Damage',
+                    'jb_rfid' => $request->input('rfid'),
+                    'jb_barcode' => $request->input('barCode'),
+                    'created_by' => $request->session()->get('empId')
+                );
+    
+    
+                $res = JB_Model::create($data);
+                
+                JB_Hist_Model::create([
+                    'jb_id' => $demoId,
+                    'action' => 'Raised',
+                    'ip_address' => $this->getUserIP(),
+                    'created_by' => $request->session()->get('empId')
+                ]);
+                
+            }
+
+
+            $Bexists = true;
+            $PreExists = true; 
             
             if($Bexists == true && $PreExists == true){
             

@@ -255,111 +255,111 @@ class BushingSetup_Controller extends Controller
     return view('ProductionLineUp.BushingSetup.bushing-setup-all', $data);
   }
 
-    public function allExcelDownload(Request $request)
-    {
-        $data['menu'] = 'bushing-setup-all';
+  public function allExcelDownload(Request $request)
+  {
+      $data['menu'] = 'bushing-setup-all';
 
-        // Initialize the query builder
-        $query = DB::table('tbl_factory_bushing_laravel as bol')
-        ->select([
-            'bol.*',
-            'psl.wattage',
-            'psml.size as cellSize',
-            'psml.brand',
-            'sh.shift as shiftdtl',
-            'a.fullname as bushing_operator_name',
-            'b.fullname as bushing_incherge_name',
-            'c.fullname as createdBy_name'
-        ])
-        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
-        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-        ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-        ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
-        ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
-        ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
+      // Initialize the query builder
+      $query = DB::table('tbl_factory_bushing_laravel as bol')
+      ->select([
+          'bol.*',
+          'psl.wattage',
+          'psml.size as cellSize',
+          'psml.brand',
+          'sh.shift as shiftdtl',
+          'a.fullname as bushing_operator_name',
+          'b.fullname as bushing_incherge_name',
+          'c.fullname as createdBy_name'
+      ])
+      ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
+      ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
+      ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+      ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
+      ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
+      ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
 
-        // 2. Safely apply dynamic filters if they exist in the request
-        if ($request->filled('createdBy')) {
-            $query->where('bol.created_by', $request->input('createdBy'));
-        }
-    
-        if ($request->filled('operator')) {
-            $query->where('bol.bushing_operator', $request->input('operator'));
-        }
-    
-        if ($request->filled('checker')) {
-            $query->where('bol.bushing_incherge', $request->input('checker'));
-        }
-    
-        if ($request->filled('shift')) {
-            $query->where('bol.bushing_shift', $request->input('shift'));
-        }
-    
-        if ($request->filled('fromDate')) {
-            // Use whereRaw with placeholders (?) to prevent SQL injection on dates
-            $query->whereRaw('CAST(bol.created_at AS DATE) >= ?', [$request->input('fromDate')]);
-        }
-    
-        if ($request->filled('toDate')) {
-            $query->whereRaw('CAST(bol.created_at AS DATE) <= ?', [$request->input('toDate')]);
-        }
-    
-        if ($request->filled('batchNo')) {
-            $query->where('bol.bushing_batchNo', $request->input('batchNo'));
-        }
-    
-        // 3. Order the results and paginate (e.g., 15 items per page)
-        // withQueryString() ensures your filters stay in the URL when clicking page numbers
-        $AllLists = $query->orderBy('bol.created_at', 'desc')
-                            ->groupBy('bol.bushing_barCode')
-                              ->get();
+      // 2. Safely apply dynamic filters if they exist in the request
+      if ($request->filled('createdBy')) {
+          $query->where('bol.created_by', $request->input('createdBy'));
+      }
+  
+      if ($request->filled('operator')) {
+          $query->where('bol.bushing_operator', $request->input('operator'));
+      }
+  
+      if ($request->filled('checker')) {
+          $query->where('bol.bushing_incherge', $request->input('checker'));
+      }
+  
+      if ($request->filled('shift')) {
+          $query->where('bol.bushing_shift', $request->input('shift'));
+      }
+  
+      if ($request->filled('fromDate')) {
+          // Use whereRaw with placeholders (?) to prevent SQL injection on dates
+          $query->whereRaw('CAST(bol.created_at AS DATE) >= ?', [$request->input('fromDate')]);
+      }
+  
+      if ($request->filled('toDate')) {
+          $query->whereRaw('CAST(bol.created_at AS DATE) <= ?', [$request->input('toDate')]);
+      }
+  
+      if ($request->filled('batchNo')) {
+          $query->where('bol.bushing_batchNo', $request->input('batchNo'));
+      }
+  
+      // 3. Order the results and paginate (e.g., 15 items per page)
+      // withQueryString() ensures your filters stay in the URL when clicking page numbers
+      $AllLists = $query->orderBy('bol.created_at', 'desc')
+                          ->groupBy('bol.bushing_barCode')
+                            ->get();
 
 
-        $fileName = 'Layup_report_' . date('Ymd_His') . '.csv';
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
+      $fileName = 'Layup_report_' . date('Ymd_His') . '.csv';
+      $headers = [
+          "Content-type"        => "text/csv",
+          "Content-Disposition" => "attachment; filename=$fileName",
+          "Pragma"              => "no-cache",
+          "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+          "Expires"             => "0"
+      ];
 
-        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
+      $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
-        // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
-            $file = fopen('php://output', 'w');
-            
-            // Add UTF-8 BOM for Excel to recognize special characters correctly
-            fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+      // 4. Create a callback to stream the data
+      $callback = function() use($AllLists, $columns) {
+          $file = fopen('php://output', 'w');
+          
+          // Add UTF-8 BOM for Excel to recognize special characters correctly
+          fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
-            // Write column headers
-            fputcsv($file, $columns);
+          // Write column headers
+          fputcsv($file, $columns);
 
-            // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
-                fputcsv($file, [
-                    $sl,
-                    \Carbon\Carbon::parse($row->bushing_date)->format('d/m/Y'),
-                    \Carbon\Carbon::parse($row->bushing_time)->format('h:i A'),
-                    $row->shiftdtl,
-                    $row->bushing_barCode,
-                    $row->elqc_source ?? 'Layout',
-                    $row->wattage,
-                    $row->cellSize,
-                    $row->bus_bar ?? '-',
-                    $row->bushing_operator_name,
-                    $row->bushing_incherge_name,
-                ]);
-            }
+          // Write data rows
+          foreach ($AllLists as $key=>$row) {
+            $sl = $key+1;
+              fputcsv($file, [
+                  $sl,
+                  \Carbon\Carbon::parse($row->bushing_date)->format('d/m/Y'),
+                  \Carbon\Carbon::parse($row->bushing_time)->format('h:i A'),
+                  $row->shiftdtl,
+                  $row->bushing_barCode,
+                  $row->elqc_source ?? 'Layout',
+                  $row->wattage,
+                  $row->cellSize,
+                  $row->bus_bar ?? '-',
+                  $row->bushing_operator_name,
+                  $row->bushing_incherge_name,
+              ]);
+          }
 
-            fclose($file);
-        };
+          fclose($file);
+      };
 
-        // 5. Return the response as a stream
-        return response()->stream($callback, 200, $headers);
-    }
+      // 5. Return the response as a stream
+      return response()->stream($callback, 200, $headers);
+  }
 
   public function add_bushing_setup(Request $request)
   {
@@ -654,7 +654,7 @@ class BushingSetup_Controller extends Controller
   
   
   public function bushing_details()
-{
+  {
     $data['menu'] = 'bushing-details';
     
     // 1. Fetch dropdown/lookup data efficiently
@@ -757,91 +757,9 @@ class BushingSetup_Controller extends Controller
     $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
     
     return view('ProductionLineUp.BushingSetup.bushing-details', $data);
-}
+  }
 
-  //   public function bushing_damage_report()
-  //   {
-  //     $data['menu'] = 'bushing-damage-report';
-  //     $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-  //       ->select('hr_mstr_shift.*')
-  //       ->get();
-
-  //     $data['userList'] = DB::table('mstr_emp')
-  //       ->select('mstr_emp.id', 'mstr_emp.fullname')
-  //       ->get();
-
-  //     $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-  //       ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-  //       ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-  //       ->get();
-
-  //     $Cond = [];
-  //     $Condition = '1=1';
-
-  //     if (isset($_GET['createdBy']) && $_GET['createdBy'] != '') {
-  //       $Cond[] = "bol.created_by = '" . $_GET['createdBy'] . "'";
-  //     }
-  //     if (isset($_GET['operator']) && $_GET['operator'] != '') {
-  //       $Cond[] = "bol.bushing_operator = '" . $_GET['operator'] . "'";
-  //     }
-  //     if (isset($_GET['checker']) && $_GET['checker'] != '') {
-  //       $Cond[] = "bol.bushing_incherge = '" . $_GET['checker'] . "'";
-  //     }
-  //     if (isset($_GET['shift']) && $_GET['shift'] != '') {
-  //       $Cond[] = "bol.bushing_shift = '" . $_GET['shift'] . "'";
-  //     }
-  //     if (isset($_GET['fromDate']) && $_GET['fromDate'] != '') {
-  //       $Cond[] = "CAST(bol.created_at AS DATE) >= '" . $_GET['fromDate'] . "'";
-  //     }
-  //     if (isset($_GET['toDate']) && $_GET['toDate'] != '') {
-  //       $Cond[] = "CAST(bol.created_at AS DATE) <= '" . $_GET['toDate'] . "'";
-  //     }
-  //     if (isset($_GET['batchNo']) && $_GET['batchNo'] != '') {
-  //       $Cond[] = "bol.bushing_batchNo = '" . $_GET['batchNo'] . "'";
-  //     }
-  //     if (count($Cond) > 0) {
-  //       $Condition = $Condition . ' AND ' . implode(' AND ', $Cond);
-  //     }
-
-  //     $sql = "SELECT 
-  //     bol.bushing_id,
-  //     bol.bushing_date,
-  //     bol.bushing_time,
-  //     bol.bushing_batchNo,
-  //     bol.bushing_rfid,
-  //     bol.bushing_barCode,
-  //     bdml.*,
-  //     psl.wattage,
-  //     sh.shift AS shiftdtl,
-  //     a.fullname AS bushing_operator,
-  //     b.fullname AS bushing_incherge,
-  //     c.fullname AS createdBy,
-  //     prj_material.material_name as matname
-  //     FROM tbl_factory_bushing_laravel AS bol
-  //     JOIN tbl_factory_bushing_damage_material_laravel AS bdml 
-  //         ON bdml.bushId = bol.bushing_id
-  //     LEFT JOIN hr_mstr_shift AS sh 
-  //         ON sh.id = bol.bushing_shift
-  //     LEFT JOIN tbl_factory_production_setup_laravel AS psl 
-  //         ON psl.batchNo = bol.bushing_batchNo
-  //     LEFT JOIN mstr_emp AS a 
-  //         ON bol.bushing_operator = a.id
-  //     LEFT JOIN mstr_emp AS b 
-  //         ON bol.bushing_incherge = b.id
-  //     LEFT JOIN mstr_emp AS c 
-  //         ON bol.created_by = c.id
-  //     LEFT JOIN materialmanagement_add_material 
-  //         ON materialmanagement_add_material.id = bdml.finishedGoodId
-  //     LEFT JOIN prj_material 
-  //         ON materialmanagement_add_material.Material_Name = prj_material.id
-  //     WHERE $Condition
-  //     ORDER BY bol.created_at DESC";
-  //     $data['AllLists'] = DB::select($sql);
-  //     // dd($data['AllLists']);
-
-  //     $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
-  //     return view('ProductionLineUp.BushingSetup.bushing-damage-report', $data);
-  //   }
+  
 
   public function bushing_damage_report()
   {
@@ -1442,149 +1360,149 @@ class BushingSetup_Controller extends Controller
   }
 
    public function pdfBushMaterial(Request $request)
-{
-    ini_set('memory_limit', '4096M');
-    set_time_limit(0);
+  {
+      ini_set('memory_limit', '4096M');
+      set_time_limit(0);
 
-    // -----------------------------------------------------------
-    // 1. Build WHERE conditions
-    // -----------------------------------------------------------
-    $Cond      = [];
-    $Condition = '1=1';
+      // -----------------------------------------------------------
+      // 1. Build WHERE conditions
+      // -----------------------------------------------------------
+      $Cond      = [];
+      $Condition = '1=1';
 
-    if ($request->filled('createdBy') && $request->input('createdBy') != '') {
-        $Cond[] = "bol.created_by = '" . $request->input('createdBy') . "'";
-    }
-    if ($request->filled('operator') && $request->input('operator') != '') {
-        $Cond[] = "bol.bushing_operator = '" . $request->input('operator') . "'";
-    }
-    if ($request->filled('checker') && $request->input('checker') != '') {
-        $Cond[] = "bol.bushing_incherge = '" . $request->input('checker') . "'";
-    }
-    if ($request->filled('shift') && $request->input('shift') != '') {
-        $Cond[] = "bol.bushing_shift = '" . $request->input('shift') . "'";
-    }
+      if ($request->filled('createdBy') && $request->input('createdBy') != '') {
+          $Cond[] = "bol.created_by = '" . $request->input('createdBy') . "'";
+      }
+      if ($request->filled('operator') && $request->input('operator') != '') {
+          $Cond[] = "bol.bushing_operator = '" . $request->input('operator') . "'";
+      }
+      if ($request->filled('checker') && $request->input('checker') != '') {
+          $Cond[] = "bol.bushing_incherge = '" . $request->input('checker') . "'";
+      }
+      if ($request->filled('shift') && $request->input('shift') != '') {
+          $Cond[] = "bol.bushing_shift = '" . $request->input('shift') . "'";
+      }
 
-    $fromDate = $request->filled('fromDate')
-        ? date('Y-m-d', strtotime($request->input('fromDate')))
-        : now()->subDays(6)->format('Y-m-d');
+      $fromDate = $request->filled('fromDate')
+          ? date('Y-m-d', strtotime($request->input('fromDate')))
+          : now()->subDays(6)->format('Y-m-d');
 
-    $toDate = $request->filled('toDate')
-        ? date('Y-m-d', strtotime($request->input('toDate')))
-        : now()->format('Y-m-d');
+      $toDate = $request->filled('toDate')
+          ? date('Y-m-d', strtotime($request->input('toDate')))
+          : now()->format('Y-m-d');
 
-    $Cond[] = "STR_TO_DATE(bol.bushing_date, '%d-%m-%Y') >= '{$fromDate}'";
-    $Cond[] = "STR_TO_DATE(bol.bushing_date, '%d-%m-%Y') <= '{$toDate}'";
+      $Cond[] = "STR_TO_DATE(bol.bushing_date, '%d-%m-%Y') >= '{$fromDate}'";
+      $Cond[] = "STR_TO_DATE(bol.bushing_date, '%d-%m-%Y') <= '{$toDate}'";
 
-    if ($request->filled('batchNo') && $request->input('batchNo') != '') {
-        $Cond[] = "bol.bushing_batchNo = '" . $request->input('batchNo') . "'";
-    }
-    if (count($Cond) > 0) {
-        $Condition = $Condition . ' AND ' . implode(' AND ', $Cond);
-    }
+      if ($request->filled('batchNo') && $request->input('batchNo') != '') {
+          $Cond[] = "bol.bushing_batchNo = '" . $request->input('batchNo') . "'";
+      }
+      if (count($Cond) > 0) {
+          $Condition = $Condition . ' AND ' . implode(' AND ', $Cond);
+      }
 
-    // -----------------------------------------------------------
-    // 2. Fetch main records (query unchanged)
-    // -----------------------------------------------------------
-    $sql = "SELECT 
-        bol.*,
-        psl.wattage,
-        sh.shift AS shiftdtl,
-        a.fullname AS bushing_operator,
-        b.fullname AS bushing_incherge,
-        c.fullname AS createdBy
-    FROM tbl_factory_bushing_laravel AS bol
-    LEFT JOIN hr_mstr_shift AS sh 
-        ON sh.id = bol.bushing_shift
-    LEFT JOIN tbl_factory_production_setup_laravel AS psl 
-        ON psl.batchNo = bol.bushing_batchNo
-    LEFT JOIN mstr_emp AS a 
-        ON bol.bushing_operator = a.id
-    LEFT JOIN mstr_emp AS b 
-        ON bol.bushing_incherge = b.id
-    LEFT JOIN mstr_emp AS c 
-        ON bol.created_by = c.id
-    WHERE $Condition
-    ORDER BY bol.created_at DESC";
+      // -----------------------------------------------------------
+      // 2. Fetch main records (query unchanged)
+      // -----------------------------------------------------------
+      $sql = "SELECT 
+          bol.*,
+          psl.wattage,
+          sh.shift AS shiftdtl,
+          a.fullname AS bushing_operator,
+          b.fullname AS bushing_incherge,
+          c.fullname AS createdBy
+      FROM tbl_factory_bushing_laravel AS bol
+      LEFT JOIN hr_mstr_shift AS sh 
+          ON sh.id = bol.bushing_shift
+      LEFT JOIN tbl_factory_production_setup_laravel AS psl 
+          ON psl.batchNo = bol.bushing_batchNo
+      LEFT JOIN mstr_emp AS a 
+          ON bol.bushing_operator = a.id
+      LEFT JOIN mstr_emp AS b 
+          ON bol.bushing_incherge = b.id
+      LEFT JOIN mstr_emp AS c 
+          ON bol.created_by = c.id
+      WHERE $Condition
+      ORDER BY bol.created_at DESC";
 
-    $allLists = DB::select($sql);
+      $allLists = DB::select($sql);
 
-    if (empty($allLists)) {
-        return response()->json(['error' => 'No data available for PDF generation.']);
-    }
+      if (empty($allLists)) {
+          return response()->json(['error' => 'No data available for PDF generation.']);
+      }
 
-    // -----------------------------------------------------------
-    // 3. Fetch related material data (queries unchanged)
-    // -----------------------------------------------------------
-    $batchNos = array_map(function ($item) {
-        return $item->bushing_batchNo;
-    }, $allLists);
+      // -----------------------------------------------------------
+      // 3. Fetch related material data (queries unchanged)
+      // -----------------------------------------------------------
+      $batchNos = array_map(function ($item) {
+          return $item->bushing_batchNo;
+      }, $allLists);
 
-    $materialsByBatch = DB::table('tbl_factory_production_setup_material_laravel as psml')
-        ->select('psml.batchNo', 'psml.qty', 'psml.size', 'psml.brand', 'mml.title as mname', 'mml.id as matId')
-        ->leftJoin('tbl_factory_material_master_laravel as mml', 'psml.material', '=', 'mml.id')
-        ->whereIn('psml.batchNo', $batchNos)
-        ->get()
-        ->groupBy('batchNo');
+      $materialsByBatch = DB::table('tbl_factory_production_setup_material_laravel as psml')
+          ->select('psml.batchNo', 'psml.qty', 'psml.size', 'psml.brand', 'mml.title as mname', 'mml.id as matId')
+          ->leftJoin('tbl_factory_material_master_laravel as mml', 'psml.material', '=', 'mml.id')
+          ->whereIn('psml.batchNo', $batchNos)
+          ->get()
+          ->groupBy('batchNo');
 
-    $cellDetailsByBatch = DB::table('tbl_factory_production_setup_material_laravel as psml')
-        ->select('psml.batchNo', 'psml.size as cellSize', 'psml.brand')
-        ->whereIn('psml.batchNo', $batchNos)
-        ->groupBy('psml.batchNo', 'psml.size', 'psml.brand')
-        ->get()
-        ->keyBy('batchNo');
+      $cellDetailsByBatch = DB::table('tbl_factory_production_setup_material_laravel as psml')
+          ->select('psml.batchNo', 'psml.size as cellSize', 'psml.brand')
+          ->whereIn('psml.batchNo', $batchNos)
+          ->groupBy('psml.batchNo', 'psml.size', 'psml.brand')
+          ->get()
+          ->keyBy('batchNo');
 
-    $materialNames = DB::table('tbl_factory_production_setup_material_laravel as psml')
-        ->select('mml.id', 'mml.title as mname')
-        ->leftJoin('tbl_factory_material_master_laravel as mml', 'psml.material', '=', 'mml.id')
-        ->whereIn('psml.batchNo', $batchNos)
-        ->groupBy('mml.id', 'mml.title')
-        ->get();
+      $materialNames = DB::table('tbl_factory_production_setup_material_laravel as psml')
+          ->select('mml.id', 'mml.title as mname')
+          ->leftJoin('tbl_factory_material_master_laravel as mml', 'psml.material', '=', 'mml.id')
+          ->whereIn('psml.batchNo', $batchNos)
+          ->groupBy('mml.id', 'mml.title')
+          ->get();
 
-    if ($materialNames->isEmpty()) {
-        $materialNames = DB::table('tbl_factory_material_master_laravel as mml')
-            ->select('mml.id', 'mml.title as mname')
-            ->get();
-    }
+      if ($materialNames->isEmpty()) {
+          $materialNames = DB::table('tbl_factory_material_master_laravel as mml')
+              ->select('mml.id', 'mml.title as mname')
+              ->get();
+      }
 
-    // -----------------------------------------------------------
-    // 4. Build applied-filter labels (unchanged)
-    // -----------------------------------------------------------
-    $appliedFilters = [];
-    if ($request->has('fromDate') && $request->input('fromDate') != '') {
-        $appliedFilters[] = 'From: ' . $request->input('fromDate');
-    }
-    if ($request->has('toDate') && $request->input('toDate') != '') {
-        $appliedFilters[] = 'To: ' . $request->input('toDate');
-    }
-    if ($request->has('batchNo') && $request->input('batchNo') != '') {
-        $appliedFilters[] = 'Batch: ' . $request->input('batchNo');
-    }
-    if ($request->has('shift') && $request->input('shift') != '') {
-        $appliedFilters[] = 'Shift: ' . $request->input('shift');
-    }
+      // -----------------------------------------------------------
+      // 4. Build applied-filter labels (unchanged)
+      // -----------------------------------------------------------
+      $appliedFilters = [];
+      if ($request->has('fromDate') && $request->input('fromDate') != '') {
+          $appliedFilters[] = 'From: ' . $request->input('fromDate');
+      }
+      if ($request->has('toDate') && $request->input('toDate') != '') {
+          $appliedFilters[] = 'To: ' . $request->input('toDate');
+      }
+      if ($request->has('batchNo') && $request->input('batchNo') != '') {
+          $appliedFilters[] = 'Batch: ' . $request->input('batchNo');
+      }
+      if ($request->has('shift') && $request->input('shift') != '') {
+          $appliedFilters[] = 'Shift: ' . $request->input('shift');
+      }
 
-    // -----------------------------------------------------------
-    // 5. Render view → PDF → stream  (dd() removed, options added)
-    // -----------------------------------------------------------
-    $pdf = Pdf::loadView('ProductionLineUp.BushingSetup.pdf_bush_material', [
-        'allLists'           => $allLists,
-        'materialNames'      => $materialNames,
-        'materialsByBatch'   => $materialsByBatch,
-        'cellDetailsByBatch' => $cellDetailsByBatch,
-        'appliedFilters'     => $appliedFilters,
-        'generatedAt'        => now()->format('Y-m-d H:i:s'),
-    ])
-    ->setPaper('A1', 'landscape')
-    ->setOptions([
-        'isHtml5ParserEnabled'    => true,
-        'isRemoteEnabled'         => false,
-        'defaultFont'             => 'sans-serif',
-        'dpi'                     => 96,
-        'isFontSubsettingEnabled' => true,
-        'enable_php'              => false,
-    ]);
+      // -----------------------------------------------------------
+      // 5. Render view → PDF → stream  (dd() removed, options added)
+      // -----------------------------------------------------------
+      $pdf = Pdf::loadView('ProductionLineUp.BushingSetup.pdf_bush_material', [
+          'allLists'           => $allLists,
+          'materialNames'      => $materialNames,
+          'materialsByBatch'   => $materialsByBatch,
+          'cellDetailsByBatch' => $cellDetailsByBatch,
+          'appliedFilters'     => $appliedFilters,
+          'generatedAt'        => now()->format('Y-m-d H:i:s'),
+      ])
+      ->setPaper('A1', 'landscape')
+      ->setOptions([
+          'isHtml5ParserEnabled'    => true,
+          'isRemoteEnabled'         => false,
+          'defaultFont'             => 'sans-serif',
+          'dpi'                     => 96,
+          'isFontSubsettingEnabled' => true,
+          'enable_php'              => false,
+      ]);
 
-    return $pdf->download('layout_material_' . now()->format('YmdHis') . '.pdf');
-}
+      return $pdf->download('layout_material_' . now()->format('YmdHis') . '.pdf');
+  }
 }

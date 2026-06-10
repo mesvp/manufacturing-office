@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\ProductionLineUp\{JB_Model, JB_Damage_Model, JB_Hist_Model};
+use App\Models\ProductionLineUp\{NinetyDeg_Model, NinetyDeg_Model_RWRK, NinetyDegDamage_Model, NinetyDegDamage_Model_RWRK, NinetyDegHist_Model};
+use App\Models\ProductionLineUp\{EL_QC, EL_QC_Defect, EL_QC_RWRK, EL_QC_Defect_RWRK, EL_QC_History};
+use App\Models\ProductionLineUp\{Bushing_Model, BushingMaterial_Model, BushingDamageMaterial_Model};
+use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model};
 
 class JunctionBox_Controller extends Controller
 {
@@ -137,47 +141,47 @@ class JunctionBox_Controller extends Controller
         $Cond = [];
 
         $query = DB::table('tbl_factory_jb_laravel as jb')
-    ->select([
-        'jb.*',
-        'psl.wattage',
-        'sh.shift as shiftdtl',
-        'a.fullname as jb_operator_name',
-        'b.fullname as jb_incharge_name',
-        'c.fullname as createdBy'
-    ])
-    ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-    ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-    ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-    ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-    ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+        ->select([
+            'jb.*',
+            'psl.wattage',
+            'sh.shift as shiftdtl',
+            'a.fullname as jb_operator_name',
+            'b.fullname as jb_incharge_name',
+            'c.fullname as createdBy'
+        ])
+        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
-// 2. Safely apply conditional filters using request()->filled()
-if (request()->filled('createdBy')) {
-    $query->where('jb.created_by', request('createdBy'));
-}
-if (request()->filled('operator')) {
-    $query->where('jb.jb_operator', request('operator'));
-}
-if (request()->filled('checker')) {
-    $query->where('jb.jb_incharge', request('checker'));
-}
-if (request()->filled('shift')) {
-    $query->where('jb.jb_shift', request('shift'));
-}
-if (request()->filled('fromDate')) {
-    $query->whereDate('jb.created_at', '>=', request('fromDate'));
-}
-if (request()->filled('toDate')) {
-    $query->whereDate('jb.created_at', '<=', request('toDate'));
-}
-if (request()->filled('batchNo')) {
-    $query->where('jb.jb_batchNo', request('batchNo'));
-}
-$query->where('jb.status', '=',1);
+        // 2. Safely apply conditional filters using request()->filled()
+        if (request()->filled('createdBy')) {
+            $query->where('jb.created_by', request('createdBy'));
+        }
+        if (request()->filled('operator')) {
+            $query->where('jb.jb_operator', request('operator'));
+        }
+        if (request()->filled('checker')) {
+            $query->where('jb.jb_incharge', request('checker'));
+        }
+        if (request()->filled('shift')) {
+            $query->where('jb.jb_shift', request('shift'));
+        }
+        if (request()->filled('fromDate')) {
+            $query->whereDate('jb.created_at', '>=', request('fromDate'));
+        }
+        if (request()->filled('toDate')) {
+            $query->whereDate('jb.created_at', '<=', request('toDate'));
+        }
+        if (request()->filled('batchNo')) {
+            $query->where('jb.jb_batchNo', request('batchNo'));
+        }
+        $query->where('jb.status', '=',1);
 
-$data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
-    ->orderByDesc('jb.created_at')
-    ->paginate(10);
+        $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
+            ->orderByDesc('jb.created_at')
+            ->paginate(10);
 
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.passed', $data);
@@ -203,47 +207,47 @@ $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
           ->get();
 
          $query = DB::table('tbl_factory_jb_laravel as jb')
-    ->select([
-        'jb.*',
-        'psl.wattage',
-        'sh.shift as shiftdtl',
-        'a.fullname as jb_operator_name',
-        'b.fullname as jb_incharge_name',
-        'c.fullname as createdBy'
-    ])
-    ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-    ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-    ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-    ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-    ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+        ->select([
+            'jb.*',
+            'psl.wattage',
+            'sh.shift as shiftdtl',
+            'a.fullname as jb_operator_name',
+            'b.fullname as jb_incharge_name',
+            'c.fullname as createdBy'
+        ])
+        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
-// 2. Safely apply conditional filters using request()->filled()
-if (request()->filled('createdBy')) {
-    $query->where('jb.created_by', request('createdBy'));
-}
-if (request()->filled('operator')) {
-    $query->where('jb.jb_operator', request('operator'));
-}
-if (request()->filled('checker')) {
-    $query->where('jb.jb_incharge', request('checker'));
-}
-if (request()->filled('shift')) {
-    $query->where('jb.jb_shift', request('shift'));
-}
-if (request()->filled('fromDate')) {
-    $query->whereDate('jb.created_at', '>=', request('fromDate'));
-}
-if (request()->filled('toDate')) {
-    $query->whereDate('jb.created_at', '<=', request('toDate'));
-}
-if (request()->filled('batchNo')) {
-    $query->where('jb.jb_batchNo', request('batchNo'));
-}
-$query->where('jb.status', '<>',1);
+        // 2. Safely apply conditional filters using request()->filled()
+        if (request()->filled('createdBy')) {
+            $query->where('jb.created_by', request('createdBy'));
+        }
+        if (request()->filled('operator')) {
+            $query->where('jb.jb_operator', request('operator'));
+        }
+        if (request()->filled('checker')) {
+            $query->where('jb.jb_incharge', request('checker'));
+        }
+        if (request()->filled('shift')) {
+            $query->where('jb.jb_shift', request('shift'));
+        }
+        if (request()->filled('fromDate')) {
+            $query->whereDate('jb.created_at', '>=', request('fromDate'));
+        }
+        if (request()->filled('toDate')) {
+            $query->whereDate('jb.created_at', '<=', request('toDate'));
+        }
+        if (request()->filled('batchNo')) {
+            $query->where('jb.jb_batchNo', request('batchNo'));
+        }
+        $query->where('jb.status', '<>',1);
 
-$data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
-    ->orderByDesc('jb.created_at')
-    ->paginate(10);
+        $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
+            ->orderByDesc('jb.created_at')
+            ->paginate(10);
 
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.rejected', $data);
@@ -446,48 +450,48 @@ $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
         $data['menu'] = 'elqc-setup';
 
         // Initialize the query builder
-     $query = DB::table('tbl_factory_jb_laravel as jb')
-    ->select([
-        'jb.*',
-        'psl.wattage',
-        'sh.shift as shiftdtl',
-        'a.fullname as jb_operator_name',
-        'b.fullname as jb_incharge_name',
-        'c.fullname as createdBy'
-    ])
-    ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-    ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-    ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-    ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-    ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+        $query = DB::table('tbl_factory_jb_laravel as jb')
+        ->select([
+            'jb.*',
+            'psl.wattage',
+            'sh.shift as shiftdtl',
+            'a.fullname as jb_operator_name',
+            'b.fullname as jb_incharge_name',
+            'c.fullname as createdBy'
+        ])
+        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
-// 2. Safely apply conditional filters using request()->filled()
-if (request()->filled('createdBy')) {
-    $query->where('jb.created_by', request('createdBy'));
-}
-if (request()->filled('operator')) {
-    $query->where('jb.jb_operator', request('operator'));
-}
-if (request()->filled('checker')) {
-    $query->where('jb.jb_incharge', request('checker'));
-}
-if (request()->filled('shift')) {
-    $query->where('jb.jb_shift', request('shift'));
-}
-if (request()->filled('fromDate')) {
-    $query->whereDate('jb.created_at', '>=', request('fromDate'));
-}
-if (request()->filled('toDate')) {
-    $query->whereDate('jb.created_at', '<=', request('toDate'));
-}
-if (request()->filled('batchNo')) {
-    $query->where('jb.jb_batchNo', request('batchNo'));
-}
-$query->where('jb.status', '=',1);
+        // 2. Safely apply conditional filters using request()->filled()
+        if (request()->filled('createdBy')) {
+            $query->where('jb.created_by', request('createdBy'));
+        }
+        if (request()->filled('operator')) {
+            $query->where('jb.jb_operator', request('operator'));
+        }
+        if (request()->filled('checker')) {
+            $query->where('jb.jb_incharge', request('checker'));
+        }
+        if (request()->filled('shift')) {
+            $query->where('jb.jb_shift', request('shift'));
+        }
+        if (request()->filled('fromDate')) {
+            $query->whereDate('jb.created_at', '>=', request('fromDate'));
+        }
+        if (request()->filled('toDate')) {
+            $query->whereDate('jb.created_at', '<=', request('toDate'));
+        }
+        if (request()->filled('batchNo')) {
+            $query->where('jb.jb_batchNo', request('batchNo'));
+        }
+        $query->where('jb.status', '=',1);
 
-$AllLists = $query->groupBy('jb.jb_id')
-    ->orderByDesc('jb.created_at')
-    ->get();
+        $AllLists = $query->groupBy('jb.jb_id')
+            ->orderByDesc('jb.created_at')
+            ->get();
     
      
 
@@ -547,60 +551,60 @@ $AllLists = $query->groupBy('jb.jb_id')
 
         // Initialize the query builder
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
-      ->selectRaw('SUM(cell_qty)')
-      ->whereColumn('d2.elqcId', 'elqc.elqc_id');
+        ->selectRaw('SUM(cell_qty)')
+        ->whereColumn('d2.elqcId', 'elqc.elqc_id');
 
-      // 2. Build the main query
-      $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
-          ->select([
-              'ninetydeg.*',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as ninetydeg_operator_name',
-              'b.fullname as ninetydeg_incharge_name',
-              'c.fullname as createdBy',
-          ])
-          // Subquery for cell damage count
-          ->selectSub(function ($query) {
-              $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
-                  ->selectRaw('SUM(cell_qty)')
-                  ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
-          }, 'no_of_cell_damage')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
-          ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
+        // 2. Build the main query
+        $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
+        ->select([
+            'ninetydeg.*',
+            'psl.wattage',
+            'sh.shift as shiftdtl',
+            'a.fullname as ninetydeg_operator_name',
+            'b.fullname as ninetydeg_incharge_name',
+            'c.fullname as createdBy',
+        ])
+        // Subquery for cell damage count
+        ->selectSub(function ($query) {
+            $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
+                ->selectRaw('SUM(cell_qty)')
+                ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
+        }, 'no_of_cell_damage')
+        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
+        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
+        ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
+        ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
+        ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
 
-      // 2. Add Conditional Filters (Laravel handles the sanitization)
-      if ($request->filled('createdBy')) {
-          $query->where('ninetydeg.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('ninetydeg.ninetydeg_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('ninetydeg.ninetydeg_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
-      }
-      if ($request->filled('toDate')) {
-          $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
-      }
-      if ($request->filled('batchNo')) {
-          $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
-      }
-      
-      $query->where('ninetydeg.status', 2);
+        // 2. Add Conditional Filters (Laravel handles the sanitization)
+        if ($request->filled('createdBy')) {
+            $query->where('ninetydeg.created_by', $request->createdBy);
+        }
+        if ($request->filled('operator')) {
+            $query->where('ninetydeg.ninetydeg_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('ninetydeg.ninetydeg_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
+        }
+        if ($request->filled('toDate')) {
+            $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
+        }
 
-      // 3. Finalize with Grouping, Ordering, and Pagination
-      $AllLists = $query->groupBy('ninetydeg.ninetydeg_id')
-                                        ->orderBy('ninetydeg.created_at', 'DESC')
-                                        ->get();
+        $query->where('ninetydeg.status', 2);
+
+        // 3. Finalize with Grouping, Ordering, and Pagination
+        $AllLists = $query->groupBy('ninetydeg.ninetydeg_id')
+        ->orderBy('ninetydeg.created_at', 'DESC')
+        ->get();
 
         $fileName = 'rejected_ELQC_report_' . date('Ymd_His') . '.csv';
         $headers = [
@@ -819,15 +823,123 @@ $AllLists = $query->groupBy('jb.jb_id')
       if ($request->input('err') == '1') {
             return redirect()->back()->with('error', 'Please correct the errors before submitting the form.');
         } else {
-            
-            $Bexists = DB::table('tbl_factory_bushing_laravel')
-            ->where('bushing_barCode', $request->input('barCode'))
-            ->where('bushing_batchNo', $request->input('batchNo'))
+
+
+            $demoId = date('YmdHis');
+        
+            //Bushing Auto Entry
+            $exists = DB::table('tbl_factory_bushing_laravel')
+            ->where('bushing_barCode', request()->input('barCode'))
             ->exists();
-            $PreExists = DB::table('tbl_factory_ninetydeg_laravel')
-            ->where('ninetydeg_barcode',  $request->input('barCode'))
-            ->where('ninetydeg_batchNo', $request->input('batchNo'))
-            ->exists(); 
+            if ($exists == false) {
+                $data = array(
+                'bushing_id' => $demoId,
+                'bushing_date' => date('d-m-Y'),
+                'bushing_time' => date('H:i:s'),
+                'bushing_operator' => request()->input('operator'),
+                'bushing_batchNo' => request()->input('batchNo'),
+                'bushing_incherge' => request()->input('incharge'),
+                'bushing_shift' => request()->input('shift'),
+                'bushing_plant' => request()->input('plant'),
+                'bushing_logo' => 'Yes',
+                'bushing_hasDamage' => 'No',
+                'bushing_rfid' => request()->input('rfid'),
+                'bushing_barCode' => request()->input('barCode'),
+                'created_by' => request()->session()->get('empId')
+                );
+
+                $res = Bushing_Model::create($data);
+
+                $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
+
+                foreach ($materials as $material) {
+                    $data = array(
+                        'bushingId' => $demoId,
+                        'prd_matId' => $material['material'],
+                        'status' => 'Yes'
+                    );
+
+                    BushingMaterial_Model::create($data);
+                }
+
+                
+            }
+
+            //ELQC Auto Entry
+            $exists = DB::table('tbl_factory_el_qc_laravel')
+            ->where('elqc_barcode', request()->input('barCode'))
+            ->exists();
+            if ($exists == false) {
+
+                $data = array(
+                    'elqc_id'       => $demoId,
+                    'elqc_date'     => date('d-m-Y'),
+                    'elqc_time'     => date('H:i:s'),
+                    'elqc_operator' => $request->input('operator'),
+                    'elqc_source'   => 'Layup',
+                    'elqc_bushingNo' => $bushId,
+                    'elqc_batchNo'  => $request->input('batchNo'),
+                    'elqc_incharge' => $request->input('incharge'),
+                    'elqc_shift'    => $request->input('shift'),
+                    'elqc_plant'    => $request->input('plant'),
+                    'status'        => '1',
+                    'rwrk_status'   => '0',
+                    'elqc_rfid'     => $request->input('rfid'),
+                    'elqc_barcode'  => $request->input('barCode'),
+                    'created_by'    => $request->session()->get('empId')
+                );
+
+                $res = EL_QC::create($data);
+
+                EL_QC_History::create([
+                    'el_qc_id'   => $demoId,
+                    'action'     => 'Raised',
+                    'ip_address' => $this->getUserIP(),
+                    'created_by' => $request->session()->get('empId')
+                ]);
+                
+            }
+
+            //Ninetydegree QC Auto Entry
+            $exists = DB::table('tbl_factory_ninetydeg_laravel')
+            ->where('ninetydeg_barcode', $request->input('barCode'))
+            ->exists();
+            if ($exists == false) {
+            
+                $data = array(
+                    'ninetydeg_id'          => $demoId,
+                    'ninetydeg_date'        => date('d-m-Y'),
+                    'ninetydeg_time'        => date('H:i:s'),
+                    'ninetydeg_operator'    => $request->input('operator'),
+                    'ninetydeg_source'      => 'ELQC',
+                    'ninetydeg_laminatorNo' => $demoId,
+                    'ninetydeg_batchNo'     => $request->input('batchNo'),
+                    'ninetydeg_incharge'    => $request->input('incharge'),
+                    'ninetydeg_cycle_no'    => '1',
+                    'ninetydeg_shift'       => $request->input('shift'),
+                    'ninetydeg_plant'       => $request->input('plant'),
+                    'status'                => '1',
+                    'rwrk_status'           => '0',
+                    'ninetydeg_pDefectRsn'  => 'No Damage',
+                    'ninetydeg_rfid'        => $request->input('rfid'),
+                    'ninetydeg_barcode'     => $request->input('barCode'),
+                    'created_by'            => $request->session()->get('empId')
+                );
+
+                $res = NinetyDeg_Model::create($data);
+
+                NinetyDegHist_Model::create([
+                    'ninetydeg_id' => $demoId,
+                    'action'       => 'Raised',
+                    'ip_address'   => $this->getUserIP(),
+                    'created_by'   => auth()->id()
+                ]);
+
+            }
+
+            
+            $Bexists = true;
+            $PreExists = true; 
             
             if($Bexists == true && $PreExists == true){
             

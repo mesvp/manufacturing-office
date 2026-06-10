@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductionLineUp\{EL_QC, EL_QC_Defect, EL_QC_RWRK, EL_QC_Defect_RWRK, EL_QC_History};
+use App\Models\ProductionLineUp\{Bushing_Model, BushingMaterial_Model, BushingDamageMaterial_Model};
+use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model};
 
 class ElQC_Controller extends Controller
 {
@@ -1005,10 +1007,48 @@ class ElQC_Controller extends Controller
     
     public function store_el_qc(Request $request)
     {
-        $Bexists = DB::table('tbl_factory_bushing_laravel')
-            ->where('bushing_barCode', $request->input('barCode'))
-            ->where('bushing_batchNo', $request->input('batchNo'))
-            ->exists();
+        $demoId = date('YmdHis');
+
+        //Bushing Auto Entry
+        $exists = DB::table('tbl_factory_bushing_laravel')
+        ->where('bushing_barCode', request()->input('barCode'))
+        ->exists();
+        if ($exists == false) {
+            $data = array(
+            'bushing_id' => $demoId,
+            'bushing_date' => date('d-m-Y'),
+            'bushing_time' => date('H:i:s'),
+            'bushing_operator' => request()->input('operator'),
+            'bushing_batchNo' => request()->input('batchNo'),
+            'bushing_incherge' => request()->input('incharge'),
+            'bushing_shift' => request()->input('shift'),
+            'bushing_plant' => request()->input('plant'),
+            'bushing_logo' => 'Yes',
+            'bushing_hasDamage' => 'No',
+            'bushing_rfid' => request()->input('rfid'),
+            'bushing_barCode' => request()->input('barCode'),
+            'created_by' => request()->session()->get('empId')
+            );
+
+            $res = Bushing_Model::create($data);
+
+            $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
+
+            foreach ($materials as $material) {
+                $data = array(
+                    'bushingId' => $demoId,
+                    'prd_matId' => $material['material'],
+                    'status' => 'Yes'
+                );
+
+                BushingMaterial_Model::create($data);
+            }
+
+            
+        }
+
+
+        $Bexists = true;
 
         if ($Bexists == true) {
             $exists = DB::table('tbl_factory_el_qc_laravel')
@@ -1041,7 +1081,7 @@ class ElQC_Controller extends Controller
                     'elqc_shift'    => $request->input('shift'),
                     'elqc_plant'    => $request->input('plant'),
                     'status'        => $request->input('el_type'),
-                    'rwrk_status'   => '1',
+                    'rwrk_status'   => '0',
                     'elqc_rfid'     => $request->input('rfid'),
                     'elqc_barcode'  => $request->input('barCode'),
                     'created_by'    => $request->session()->get('empId')
