@@ -675,79 +675,7 @@ class ElQC_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    // public function pendingPDF(Request $request)
-    // {
-    //     $data['menu'] = 'elqc-setup';
-
-    //     // Initialize the query builder
-    //     $query = DB::table('tbl_factory_bushing_laravel as bol')
-    //       ->select([
-    //           'bol.*',
-    //           'elqc.elqc_id', 'elqc.rwrk_status', 'elqc.status', 'elqc.elqc_source',
-    //           'psl.wattage',
-    //           'psml.size as cellSize',
-    //           'sh.shift as shiftdtl',
-    //           'a.fullname as bushing_operator_name',
-    //           'b.fullname as bushing_incherge_name',
-    //           'c.fullname as createdBy'
-    //       ])
-    //       ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
-    //       ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
-    //       ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-    //       ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-    //       ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
-    //       ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
-    //       ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
-
-    //     // Apply Initial Base Conditions
-    //     $query->where(function ($q) {
-    //         $q->whereNull('elqc.elqc_bushingNo')
-    //           ->orWhere(function ($sub) {
-    //               $sub->where('elqc.rwrk_status', '')
-    //                   ->where('elqc.status', '0');
-    //           });
-    //     })->where('bol.bushing_hasDamage', 'No');
-
-    //     // Apply Dynamic Filters from Request
-    //     if ($request->filled('createdBy')) {
-    //         $query->where('elqc.created_by', $request->createdBy);
-    //     }
-    //     if ($request->filled('operator')) {
-    //         $query->where('elqc.elqc_operator', $request->operator);
-    //     }
-    //     if ($request->filled('checker')) {
-    //         $query->where('elqc.elqc_incharge', $request->checker);
-    //     }
-    //     if ($request->filled('shift')) {
-    //         $query->where('elqc.elqc_shift', $request->shift);
-    //     }
-    //     if ($request->filled('fromDate')) {
-    //         $query->whereDate('elqc.created_at', '>=', $request->fromDate);
-    //     }
-    //     if ($request->filled('toDate')) {
-    //         $query->whereDate('elqc.created_at', '<=', $request->toDate);
-    //     }
-    //     if ($request->filled('batchNo')) {
-    //         $query->where('elqc.elqc_batchNo', $request->batchNo);
-    //     }
-
-    //     // Group, Order, and Paginate
-    //     $lists = $query->groupBy('bol.bushing_id')
-    //         ->orderBy('bol.created_at', 'DESC')
-    //         ->get(); 
-
-    //     $data = [
-    //         'title' => 'Pending ELQC Report',
-    //         'date' => date('m/d/Y'),
-    //         'lists' => $lists
-    //     ];
-
-    //     // If you decide to use DomPDF (standard):
-    //     $pdf = Pdf::loadView('ProductionLineUp.ElQC.pending_pdf', $data)->setPaper('a3', 'landscape');
-    //     return $pdf->download('pending_report.pdf');
-            
-    // }
-
+    
 
     public function passedExcel(Request $request)
     {
@@ -779,14 +707,6 @@ class ElQC_Controller extends Controller
           ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
           ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
 
-      // 3. Apply Base Conditions (Initial logical group)
-    //   $query->where(function ($q) {
-    //       $q->whereNull('elqc.elqc_bushingNo')
-    //         ->orWhere(function ($sub) {
-    //             $sub->where('elqc.rwrk_status', '')
-    //                 ->where('elqc.status', '0');
-    //         });
-    //   })->where('bol.bushing_hasDamage', 'No');
 
       // 4. Apply Dynamic Filters (Using $request instead of $_GET)
       if ($request->filled('createdBy')) {
@@ -871,87 +791,7 @@ class ElQC_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    // public function passedPDF(Request $request)
-    // {
-    //     $data['menu'] = 'elqc-setup';
-
-    //     // Initialize the query builder
-    //     $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
-    //   ->selectRaw('SUM(cell_qty)')
-    //   ->whereColumn('d2.elqcId', 'elqc.elqc_id');
-
-    //   // 2. Build the main query
-    //   $query = DB::table('tbl_factory_el_qc_laravel as elqc')
-    //       ->select([
-    //           'elqc.*',
-    //           'psl.wattage',
-    //           'psml.size as cellSize',
-    //           'bol.bushing_id',
-    //           'sh.shift as shiftdtl',
-    //           'a.fullname as elqc_operator_name', // Avoid alias collision with original column
-    //           'b.fullname as elqc_incharge_name',
-    //           'c.fullname as createdByName',
-    //       ])
-    //       ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
-    //       ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-    //       ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
-    //       ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-    //       ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-    //       ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
-    //       ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
-    //       ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
-
-    //   // 3. Apply Base Conditions (Initial logical group)
-    // //   $query->where(function ($q) {
-    // //       $q->whereNull('elqc.elqc_bushingNo')
-    // //         ->orWhere(function ($sub) {
-    // //             $sub->where('elqc.rwrk_status', '')
-    // //                 ->where('elqc.status', '0');
-    // //         });
-    // //   })->where('bol.bushing_hasDamage', 'No');
-
-    //   // 4. Apply Dynamic Filters (Using $request instead of $_GET)
-    //   if ($request->filled('createdBy')) {
-    //       $query->where('elqc.created_by', $request->createdBy);
-    //   }
-    //   if ($request->filled('operator')) {
-    //       $query->where('elqc.elqc_operator', $request->operator);
-    //   }
-    //   if ($request->filled('checker')) {
-    //       $query->where('elqc.elqc_incharge', $request->checker);
-    //   }
-    //   if ($request->filled('shift')) {
-    //       $query->where('elqc.elqc_shift', $request->shift);
-    //   }
-    //   if ($request->filled('fromDate')) {
-    //       $query->whereDate('elqc.created_at', '>=', $request->fromDate);
-    //   }
-    //   if ($request->filled('toDate')) {
-    //       $query->whereDate('elqc.created_at', '<=', $request->toDate);
-    //   }
-    //   if ($request->filled('batchNo')) {
-    //       $query->where('elqc.elqc_batchNo', $request->batchNo);
-    //   }
-    //   $query->where('elqc.status', '=', 1);
-
-    //   // 5. Final Execution with Pagination
-    //   $lists = $query->groupBy('elqc.elqc_id')
-    //   ->orderBy('elqc.created_at', 'DESC')
-    //     ->get();
-
-
-    //     $data = [
-    //         'title' => 'Passed ELQC Report',
-    //         'date' => date('m/d/Y'),
-    //         'lists' => $lists
-    //     ];
-
-    //     // If you decide to use DomPDF (standard):
-    //     $pdf = Pdf::loadView('ProductionLineUp.ElQC.passed_pdf', $data)->setPaper('a3', 'landscape');
-    //     return $pdf->download('passed_report.pdf');
-            
-    // }
-
+    
 
     public function rejectedExcel(Request $request)
     {
@@ -983,14 +823,7 @@ class ElQC_Controller extends Controller
           ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
           ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
 
-      // 3. Apply Base Conditions (Initial logical group)
-    //   $query->where(function ($q) {
-    //       $q->whereNull('elqc.elqc_bushingNo')
-    //         ->orWhere(function ($sub) {
-    //             $sub->where('elqc.rwrk_status', '')
-    //                 ->where('elqc.status', '0');
-    //         });
-    //   })->where('bol.bushing_hasDamage', 'No');
+      
 
       // 4. Apply Dynamic Filters (Using $request instead of $_GET)
       if ($request->filled('createdBy')) {
@@ -1007,156 +840,76 @@ class ElQC_Controller extends Controller
       }
       if ($request->filled('fromDate')) {
           $query->whereDate('elqc.created_at', '>=', $request->fromDate);
-    }else{
-      $query->whereDate('elqc.created_at', '>=', date('Y-m-d', strtotime('-15 days')) );
+        }else{
+        $query->whereDate('elqc.created_at', '>=', date('Y-m-d', strtotime('-15 days')) );
+        }
+        
+        if ($request->filled('toDate')) {
+        $query->whereDate('elqc.created_at', '<=', $request->toDate);
+        }else{
+        $query->whereDate('elqc.created_at', '<=', date('Y-m-d') );    
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('elqc.elqc_batchNo', $request->batchNo);
+        }
+        $query->where('elqc.status', '=', 2);
+
+        // 5. Final Execution with Pagination
+        $AllLists = $query->groupBy('elqc.elqc_id')
+            ->orderBy('elqc.created_at', 'DESC')
+                ->get();
+
+
+            $fileName = 'rejected_ELQC_report_' . date('Ymd_His') . '.csv';
+            $headers = [
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=$fileName",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ];
+
+            $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
+
+            // 4. Create a callback to stream the data
+            $callback = function() use($AllLists, $columns) {
+                $file = fopen('php://output', 'w');
+                
+                // Add UTF-8 BOM for Excel to recognize special characters correctly
+                fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+
+                // Write column headers
+                fputcsv($file, $columns);
+
+                // Write data rows
+                foreach ($AllLists as $key=>$row) {
+                $sl = $key+1;
+                //if ($row->status == '2' && $row->rwrk_status == '2'){
+                    fputcsv($file, [
+                        $sl,
+                        \Carbon\Carbon::parse($row->elqc_date)->format('d/m/Y'),
+                        \Carbon\Carbon::parse($row->elqc_time)->format('h:i A'),
+                        $row->shiftdtl,
+                        $row->elqc_barcode,
+                        $row->elqc_source ?? 'Layout',
+                        $row->wattage,
+                        $row->cellSize,
+                        $row->bus_bar ?? '-',
+                        $row->elqc_operator_name,
+                        $row->elqc_incharge_name,
+                    ]);
+                //}
+                }
+
+                fclose($file);
+            };
+
+            // 5. Return the response as a stream
+            return response()->stream($callback, 200, $headers);
     }
+        
+
     
-    if ($request->filled('toDate')) {
-      $query->whereDate('elqc.created_at', '<=', $request->toDate);
-    }else{
-      $query->whereDate('elqc.created_at', '<=', date('Y-m-d') );    
-    }
-      if ($request->filled('batchNo')) {
-          $query->where('elqc.elqc_batchNo', $request->batchNo);
-      }
-      $query->where('elqc.status', '=', 2);
-
-      // 5. Final Execution with Pagination
-      $AllLists = $query->groupBy('elqc.elqc_id')
-          ->orderBy('elqc.created_at', 'DESC')
-            ->get();
-
-
-        $fileName = 'rejected_ELQC_report_' . date('Ymd_His') . '.csv';
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-
-        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
-
-        // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
-            $file = fopen('php://output', 'w');
-            
-            // Add UTF-8 BOM for Excel to recognize special characters correctly
-            fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
-
-            // Write column headers
-            fputcsv($file, $columns);
-
-            // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
-              //if ($row->status == '2' && $row->rwrk_status == '2'){
-                fputcsv($file, [
-                    $sl,
-                    \Carbon\Carbon::parse($row->elqc_date)->format('d/m/Y'),
-                    \Carbon\Carbon::parse($row->elqc_time)->format('h:i A'),
-                    $row->shiftdtl,
-                    $row->elqc_barcode,
-                    $row->elqc_source ?? 'Layout',
-                    $row->wattage,
-                    $row->cellSize,
-                    $row->bus_bar ?? '-',
-                    $row->elqc_operator_name,
-                    $row->elqc_incharge_name,
-                ]);
-              //}
-            }
-
-            fclose($file);
-        };
-
-        // 5. Return the response as a stream
-        return response()->stream($callback, 200, $headers);
-    }
-    // public function rejectedPDF(Request $request)
-    // {
-    //     $data['menu'] = 'elqc-setup';
-
-    //     // Initialize the query builder
-    //     $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
-    //   ->selectRaw('SUM(cell_qty)')
-    //   ->whereColumn('d2.elqcId', 'elqc.elqc_id');
-
-    //   // 2. Build the main query
-    //   $query = DB::table('tbl_factory_el_qc_laravel as elqc')
-    //       ->select([
-    //           'elqc.*',
-    //           'psl.wattage',
-    //           'psml.size as cellSize',
-    //           'bol.bushing_id',
-    //           'sh.shift as shiftdtl',
-    //           'a.fullname as elqc_operator_name', // Avoid alias collision with original column
-    //           'b.fullname as elqc_incharge_name',
-    //           'c.fullname as createdByName',
-    //       ])
-    //       ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
-    //       ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-    //       ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
-    //       ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-    //       ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-    //       ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
-    //       ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
-    //       ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
-
-    //   // 3. Apply Base Conditions (Initial logical group)
-    // //   $query->where(function ($q) {
-    // //       $q->whereNull('elqc.elqc_bushingNo')
-    // //         ->orWhere(function ($sub) {
-    // //             $sub->where('elqc.rwrk_status', '')
-    // //                 ->where('elqc.status', '0');
-    // //         });
-    // //   })->where('bol.bushing_hasDamage', 'No');
-
-    //   // 4. Apply Dynamic Filters (Using $request instead of $_GET)
-    //   if ($request->filled('createdBy')) {
-    //       $query->where('elqc.created_by', $request->createdBy);
-    //   }
-    //   if ($request->filled('operator')) {
-    //       $query->where('elqc.elqc_operator', $request->operator);
-    //   }
-    //   if ($request->filled('checker')) {
-    //       $query->where('elqc.elqc_incharge', $request->checker);
-    //   }
-    //   if ($request->filled('shift')) {
-    //       $query->where('elqc.elqc_shift', $request->shift);
-    //   }
-    //   if ($request->filled('fromDate')) {
-    //       $query->whereDate('elqc.created_at', '>=', $request->fromDate);
-    //   }
-    //   if ($request->filled('toDate')) {
-    //       $query->whereDate('elqc.created_at', '<=', $request->toDate);
-    //   }
-    //   if ($request->filled('batchNo')) {
-    //       $query->where('elqc.elqc_batchNo', $request->batchNo);
-    //   }
-    //   $query->where('elqc.status', '=', 2);
-
-    //   // 5. Final Execution with Pagination
-    //   $lists = $query->groupBy('elqc.elqc_id')
-    //   ->orderBy('elqc.created_at', 'DESC')
-    //     ->get();
-
-
-    //     $data = [
-    //         'title' => 'Rejected ELQC Report',
-    //         'date' => date('m/d/Y'),
-    //         'lists' => $lists
-    //     ];
-
-    //     // If you decide to use DomPDF (standard):
-    //     $pdf = Pdf::loadView('ProductionLineUp.ElQC.rejected_pdf', $data)->setPaper('a3', 'landscape');
-    //     return $pdf->download('rejected_report.pdf');
-            
-    // }
-    
-
-
     public function add_el_qc()
     {
         $data['menu'] = 'elqc-setup';
@@ -1248,101 +1001,7 @@ class ElQC_Controller extends Controller
         return view('ProductionLineUp.ElQC.el_qc_view', $data);
     }
 
-    // public function store_el_qc(Request $request)
-    // {
-    //     $Bexists = DB::table('tbl_factory_bushing_laravel')
-    //         ->where('bushing_barCode', $request->input('barCode'))
-    //         ->where('bushing_batchNo', $request->input('batchNo'))
-    //         ->exists();
-        
-    //     if($Bexists == true){
-    //         $exists = DB::table('tbl_factory_el_qc_laravel')
-    //       ->where('elqc_barcode', request()->input('barCode'))
-    //       ->exists();
-          
-    //         if($exists == false){
-    //             // dd($request->all());
-    //             $bushId = DB::table('tbl_factory_bushing_laravel')
-    //                 ->where('bushing_barCode', $request->input('barCode'))
-    //                 ->where('bushing_batchNo', $request->input('batchNo'))
-    //               ->value('bushing_id');
-    //             $id = date('YmdHis');
-    //             $data = array(
-    //                 'elqc_id' => $id,
-    //                 'elqc_date' => date('d-m-Y'),
-    //                 'elqc_time' => date('H:i:s'),
-    //                 'elqc_operator' => $request->input('operator'),
-    //                 'elqc_source' => 'Layout',
-    //                 'elqc_bushingNo' => $bushId,
-    //                 'elqc_batchNo' => $request->input('batchNo'),
-    //                 'elqc_incharge' => $request->input('incharge'),
-    //                 'elqc_shift' => $request->input('shift'),
-    //                 'elqc_plant' => $request->input('plant'),
-    //                 'status' => $request->input('el_type'),
-    //                 // 'rwrk_status' => ($request->input('el_type') == '1') ? '1' : '',
-    //                 'rwrk_status' => '1',
-    //                 'elqc_rfid' => $request->input('rfid'),
-    //                 'elqc_barcode' => $request->input('barCode'),
-    //                 'created_by' => $request->session()->get('empId')
-    //             );
-        
-    //             $res = EL_QC::create($data);
-    //             EL_QC_History::create([
-    //                 'el_qc_id' => $id,
-    //                 'action' => 'Raised',
-    //                 'ip_address' => $this->getUserIP(),
-    //                 'created_by' => auth()->id()
-    //             ]);
-    //             $cell_positions = $request->input('cell_position', []);
-    //             $cell_qtys = $request->input('cell_qty', []);
-    //             $dmgMat_reasons = $request->input('dmgMat_reason', []);
-    //             $defect_categories = $request->input('dmgMat_cat', []);
-    //             $res_prsns = $request->input('res_prsn', []);
-    //             $res_machines = $request->input('res_machine', []);
-        
-    //             if ($request->input('el_type') === '0' && is_array($cell_positions) && count($cell_positions) > 0) {
-    //                 foreach ($cell_positions as $i => $cell_no) {
-    //                     // skip empty rows (optional)
-    //                     if ($cell_no === null || $cell_no === '') {
-    //                         continue;
-    //                     }
-        
-    //                     $defectData = array(
-    //                         'elqcId' => $id,
-    //                         'cell_no' => $cell_no,
-    //                         'cell_qty' => $cell_qtys[$i] ?? null,
-    //                         'defectRsn' => $dmgMat_reasons[$i] ?? null,
-    //                         'defectCatgry' => $defect_categories[$i] ?? null,
-    //                         'res_prsn' => $res_prsns[$i] ?? null,
-    //                         'res_machine' => $res_machines[$i] ?? null,
-    //                         'status' => '0'
-    //                     );
-        
-    //                     EL_QC_Defect::create($defectData);
-    //                 }
-    //             }
-    //             $lock = request()->input('lock');
-    //             $batchNo = request()->input('batchNo');
-    //             $oprtr = request()->input('operator');
-    //             $incherge = request()->input('incharge');
-    //             $shift = request()->input('shift');
-    //             $plant = request()->input('plant');
-    //             $page = request()->input('page');
-    //             if ($res->exists) {
-    //                 if ($lock && $page) {
-    //                     $url = 'production-lineup/el-qc-add?page=ALL&lock=1&batchNo=' . $batchNo . '&operator=' . $oprtr . '&shift=' . $shift . '&incharge=' . $incherge . '&plant=' . $plant;
-    //                     return redirect($url)->with('success', 'El QC data stored successfully!');
-    //                 } else {
-    //                     return redirect('production-lineup/el_qc')->with('success', 'El QC data stored successfully!');
-    //                 }
-    //             }
-    //         }else{
-    //             return redirect('production-lineup/el_qc')->with('success', 'El QC data stored failed! Duplicate Barcode.');
-    //         }
-    //     }else{
-    //         return redirect('production-lineup/el_qc')->with('success', 'El QC data stored failed! Barcode not Passed in Layout Setup.');
-    //     }
-    // }
+    
     
     public function store_el_qc(Request $request)
     {
@@ -1538,51 +1197,7 @@ class ElQC_Controller extends Controller
             return redirect('production-lineup/el_qc')->with('success', 'El QC data store failed! Barcode not Passed in Layout Setup.');
         }
     }
-    // public function getBushingMaterial(Request $request)
-    // {
-    //     $bushingno = $request->input('q');
-    //     // Get batch no & logo once
-    //     $bushing = DB::table('tbl_factory_bushing_laravel')
-    //         ->where('bushing_id', $bushingno)
-    //         ->select('bushing_batchNo', 'bushing_logo')
-    //         ->first();
-
-    //     if (!$bushing) {
-    //         return response()->json(['message' => 'Bushing not found'], 404);
-    //     }
-
-    //     // Get materials
-    //     $bushingMaterial = DB::table('tbl_factory_production_setup_laravel as psl')
-    //         ->join('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-    //         ->join('tbl_factory_material_master_laravel as m', 'm.id', '=', 'psml.material')
-    //         ->where('psl.batchNo', $bushing->bushing_batchNo)
-    //         ->select(
-    //             'm.id as matid',
-    //             'm.title as matname',
-    //             'psml.size as msize',
-    //             'psml.brand as mbrand',
-    //             'psl.wattage'
-    //         )
-    //         ->get();
-
-    //     $materials = [];
-
-    //     foreach ($bushingMaterial as $item) {
-    //         $materials[] = [
-    //             'matid'   => $item->matid,
-    //             'matname' => $item->matname,
-    //             'msize'    => $item->msize ?? 'N/A',
-    //             'mbrand'   => $item->mbrand ?? 'N/A',
-    //         ];
-    //     }
-
-    //     return response()->json([
-    //         'batchno'       => $bushing->bushing_batchNo,
-    //         'bushing_logo' => $bushing->bushing_logo,
-    //         'wattage'      => $bushingMaterial->first()->wattage ?? 'N/A',
-    //         'materials'    => $materials
-    //     ]);
-    // }
+    
     
     public function getBushingMaterial(Request $request)
     {
@@ -1631,67 +1246,6 @@ class ElQC_Controller extends Controller
         return response()->json(['exists' => $exists]);
     }
 
-    // public function validateBarCode(Request $request)
-    // {
-    //     $barcode = $request->get('barCode');
-    //     $batchNo = $request->get('id');
-    //     $action = $request->get('action') ?? '';
-    //     $btch_viewNo = $request->get('batchNo') ?? '';
-        
-    //     if ($action === 'view') {
-    //         $exists = DB::table('tbl_factory_bushing_laravel')
-    //         ->select('bushing_logo')
-    //         ->where('bushing_barCode', $barcode)
-    //         ->where('bushing_batchNo', $btch_viewNo)
-    //         //->where('bushing_id', $batchNo)
-    //         ->first();
-    //     } else {
-    //         $exists = DB::table('tbl_factory_bushing_laravel')
-    //         ->select('bushing_id' , 'bushing_logo')
-    //         ->where('bushing_barCode', $barcode)
-    //         ->where('bushing_batchNo', $batchNo)
-    //         ->get();
-    //     }
-            
-    //     // If action is 'view', we're in view mode - skip EL QC validation
-    //     if ($action === 'view') {
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'bushing_logo' => $exists->bushing_logo ?? null,
-    //             'message' => 'Barcode is valid (view mode).',
-    //         ]);
-    //     }
-            
-    //     // Check if barcode already used in EL QC
-    //     $elQcExists = DB::table('tbl_factory_el_qc_laravel')
-    //         ->where('elqc_barcode', $barcode)
-    //         ->where('status', '0')
-    //         ->where('rwrk_status', '1')
-    //         ->exists();
-    
-    //     // If found in EL QC - INVALID
-    //     if ($elQcExists) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Barcode already used in EL QC.',
-    //         ]);
-    //     }
-    //     if ($exists->isEmpty()) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Barcode is not valid against this batchno.',
-    //         ]);
-    //     } else {
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'bushing_id' => $exists[0]->bushing_id ?? null,
-    //             'bushing_logo' => $exists[0]->bushing_logo,
-    //             'message' => 'Barcode is valid.',
-    //         ]);
-    //     }
-
-    //     return response()->json(['exists' => $exists]);
-    // }
     
     public function validateBarCode(Request $request)
     {

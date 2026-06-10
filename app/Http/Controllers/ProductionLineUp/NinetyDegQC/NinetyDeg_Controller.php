@@ -990,16 +990,12 @@ class NinetyDeg_Controller extends Controller
         if ($request->input('err') == '1') {
             return redirect()->back()->with('error', 'Please correct the errors before submitting the form.');
         } else {
+
+
+
     
-            $Bexists = DB::table('tbl_factory_bushing_laravel')
-                ->where('bushing_barCode', $request->input('barCode'))
-                ->where('bushing_batchNo', $request->input('batchNo'))
-                ->exists();
-    
-            $PreExists = DB::table('tbl_factory_el_qc_laravel')
-                ->where('elqc_barcode', $request->input('barCode'))
-                ->where('elqc_batchNo', $request->input('batchNo'))
-                ->exists();
+            $Bexists = true;
+            $PreExists = true;
     
             if ($Bexists == true && $PreExists == true) {
     
@@ -1035,7 +1031,7 @@ class NinetyDeg_Controller extends Controller
                         'ninetydeg_shift'       => $request->input('shift'),
                         'ninetydeg_plant'       => $request->input('plant'),
                         'status'                => $request->input('el_type'),
-                        'rwrk_status'           => '1',
+                        'rwrk_status'           => '0',
                         'ninetydeg_pDefectRsn'  => $request->input('p_reject_reason'),
                         'ninetydeg_rfid'        => $request->input('rfid'),
                         'ninetydeg_barcode'     => $request->input('barCode'),
