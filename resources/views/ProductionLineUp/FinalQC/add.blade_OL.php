@@ -1,7 +1,7 @@
 @extends('includes.layout')
 
 @section('pageHeading')
-    Add Junction Box
+    Final QC
 @endsection
 
 <style>
@@ -88,7 +88,7 @@
     <div class="container-fluid flex-grow-1 container-p-y">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center bg-label-primary py-2">
-                <h5 class="mb-0">Add Junction Box page : </h5>
+                <h5 class="mb-0">Add Final Quality Control page : </h5>
                 <div class="text-end">
                     <a href="javascript: history.go(-1)" class="ms-2 btn  btn-primary btn-sm waves-effect waves-light"
                         data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Back to list"><span
@@ -96,7 +96,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <form id="elform" action="{{ url('production-lineup/junctionbox/insert') }}" method="POST">
+                <form id="elform" action="{{ url('production-lineup/final-qc/insert') }}" method="POST">
                     @csrf
                     <div class="bg-body col-lg-12 mx-auto p-3 rounded-2">
                         <div class="g-2 row">
@@ -245,38 +245,7 @@
                                     </tr>
                                 </thead>
                                 <!-- First tbody: Barcode validation result -->
-                                <tbody class="table-border-bottom-0 bushmaterial-logo">
-                                  @if(isset($_GET['id']))
-                                  <tr>
-                                    <td class="text-dark">Logo</td>
-                                    <td></td>
-                                    <td colspan="4" class="text-center">
-                                        <input type="text"
-                                               class="form-control w-px-150"
-                                               value="{{ $bushingLogo->bushing_logo ?? '' }}"
-                                               disabled>
-                                    </td>
-                                  </tr>
-                                  @endif;
-                                  @if(isset($_GET['id']))
-                                  @foreach ($bushingMaterial as $data)
-                                  <tr>
-                                    <td class="text-dark">{{ $data->matname }}</td>
-                                    <td> <input type="text"
-                                               class="form-control w-px-150"
-                                               value="{{ $data->msize }}"
-                                               disabled> 
-                                    </td>
-                                    <td colspan="4" class="text-center">
-                                        <input type="text"
-                                               class="form-control w-px-150"
-                                               value="{{ $data->mbrand }}"
-                                               disabled>
-                                    </td>
-                                  </tr>                                  
-                                  @endforeach
-                                  @endif;
-                                </tbody>
+                                <tbody class="table-border-bottom-0 bushmaterial-logo"></tbody>
                                 
                                 <tbody class="table-border-bottom-0 bushmaterial">
 
@@ -302,7 +271,16 @@
                                     <!--    <td><input type="text" class="form-control" name="rfid" id="rfid2"-->
                                     <!--            placeholder="Fetch No."></td>-->
                                     <!--</tr>-->
-                                    @if (request()->get('page'))
+                                    @if (request()->get('bid'))
+                                        <tr>
+                                            <td>Bar Code</td>
+                                            <td class="py-1">
+                                                
+                                            </td>
+                                            <td><input type="text" id="barcodeInput2" class="form-control" name="barCode"
+                                                    placeholder="Fetch No." autocomplete="off" value="{{ request()->get('bid') }}" required readonly></td>
+                                        </tr>
+                                    @else
                                         <tr>
                                             <td>Bar Code</td>
                                             <td class="py-1">
@@ -311,15 +289,6 @@
                                             </td>
                                             <td><input type="text" id="barcodeInput2" class="form-control" name="barCode"
                                                     placeholder="Fetch No." autocomplete="off" required readonly></td>
-                                        </tr>
-                                    @else
-                                        <tr>
-                                            <td>Bar Code</td>
-                                            <td class="py-1">
-                                            
-                                            </td>
-                                            <td><input type="text" id="barcodeInput2" class="form-control" name="barCode"
-                                                    placeholder="Fetch No." autocomplete="off" value="{{ $_GET['bid'] }}" required readonly></td>
                                         </tr>
                                     @endif
                                     <tr>
@@ -362,11 +331,12 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>SL No</th>
-                                            <th>Type</th>
-                                            <th>Size</th>
-                                            <th>Brand</th>
-                                            <th>Quantity</th>
-                                            <th>UOM</th>
+                                            <th>Cell No</th>
+                                            <th>Reject Cell Qty</th>
+                                            <th>Defect Category</th>
+                                            <th>Defect Reason</th>
+                                            <th>Responsible Person</th>
+                                            <th>Responsible Machine</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -374,42 +344,91 @@
                                         <tr>
                                             <td>1</td>
                                             <td>
-                                                <select name="type[]" class="form-select w-px-150" required>
-                                                    <option value="">Select One</option>
-                                                    <option value="Positive JB">Positive JB</option>
-                                                    <option value="Negative JB">Negative JB</option>
-                                                    <option value="Middle JB">Middle JB</option>
-                                                    <option value="Glue">Glue</option>
+                                                <select name="cell_position[]" class="form-select w-px-150" required>
+                                                    <option value="">Select Cell</option>
+                                                    @if (!empty($bushingMaterial))
+                                                        @php
+                                                            $rows = (int) $bushingMaterial->cellRow;
+                                                            $cols = (int) $bushingMaterial->celColumn;
+
+                                                            function numToColLetter($num)
+                                                            {
+                                                                $letters = '';
+                                                                while ($num > 0) {
+                                                                    $remainder = ($num - 1) % 26;
+                                                                    $letters = chr(65 + $remainder) . $letters;
+                                                                    $num = intdiv($num - 1, 26);
+                                                                }
+                                                                return $letters;
+                                                            }
+                                                        @endphp
+
+                                                        <!--@for ($col = 1; $col <= $cols; $col++)-->
+                                                        <!--    @php $colLetter = numToColLetter($col); @endphp-->
+                                                        <!--    @for ($row = 1; $row <= $rows; $row++)-->
+                                                        <!--        <option value="{{ $row . $colLetter }}">-->
+                                                        <!--            {{ $row . $colLetter }}</option>-->
+                                                        <!--    @endfor-->
+                                                        <!--@endfor-->
+                                                        
+                                                        @for ($row = 1; $row <= $rows; $row++)
+                                                            @php $rowLetter = numToColLetter($row); @endphp
+                                                            @for ($col = 1; $col <= $cols; $col++)
+                                                                <option value="{{ $rowLetter . $col }}">
+                                                                    {{ $rowLetter . $col }}
+                                                                </option>
+                                                            @endfor
+                                                        @endfor
+                                                    @else
+                                                        <option disabled>No cell available</option>
+                                                    @endif
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="text" name="size[]"
-                                                    class="form-control w-px-150" placeholder="0.5/1"
-                                                    inputmode="decimal" 
+                                                <input type="text" name="cell_qty[]"
+                                                    class="form-control invoice-item-price w-px-150" placeholder="0.5/1"
+                                                    inputmode="decimal" pattern="^\d+(\.\d+)?$"
                                                     title="Enter a valid number (e.g., 1 or 0.5)"
-                                                    oninput="">
+                                                    oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
 
                                             </td>
                                             <td>
-                                                <input type="text" name="brand[]"
-                                                    class="form-control w-px-150" placeholder="Brand"
-                                                    inputmode=""
-                                                    title="Enter a valid number (e.g., 1 or 0.5)"
-                                                    oninput="">
+                                                <select name="dmgMat_cat[]" class="form-select" required>
+                                                    <option value="" selected>Select Category</option>
+                                                    @foreach ($DmgCat as $dmg)
+                                                        <option value="{{ $dmg->mstr_type_name }}">
+                                                            {{ $dmg->mstr_type_name }}</option>
+                                                    @endforeach
+                                                </select>
                                             </td>
                                             <td>
-                                                <input type="text" name="qty[]"
-                                                    class="form-control  w-px-150" placeholder="Quantity"
-                                                    inputmode="decimal" 
-                                                    title="Enter a valid number (e.g., 1 or 0.5)"
-                                                    oninput="">
+                                                <select name="dmgMat_reason[]" class="form-select" required>
+                                                    <option value="" selected>Select Damage</option>
+                                                    @foreach ($DmgRsn as $dmg)
+                                                        <option value="{{ $dmg->mstr_type_name }}">
+                                                            {{ $dmg->mstr_type_name }}</option>
+                                                    @endforeach
+                                                </select>
                                             </td>
                                             <td>
-                                                <input type="text" name="uom[]"
-                                                    class="form-control  w-px-150" placeholder="UOM"
-                                                     
-                                                    title="Enter a valid number (e.g., 1 or 0.5)"
-                                                    oninput="">
+                                                <select class="form-select w-px-200" name="res_prsn[]" id="res_prsn"
+                                                    required>
+                                                    <option value="">Select Employee</option>
+                                                    @foreach ($userList as $user)
+                                                        <option value="{{ $user->id }}">
+                                                            {{ $user->fullname }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select id="" class="form-select w-px-200" name="res_machine[]"
+                                                    required>
+                                                    <option value="">Select Machine</option>
+                                                    @foreach ($DmgMachine as $dmg)
+                                                        <option value="{{ $dmg->mstr_type_name }}">
+                                                            {{ $dmg->mstr_type_name }}</option>
+                                                    @endforeach
+                                                </select>
                                             </td>
                                             <td>
                                                 <button type="button" id="addProduct" class="btn btn-sm btn-primary">
@@ -517,7 +536,7 @@
             function validateBarcode(barCodeValue, batchNo) {
                 if (!barCodeValue || !batchNo) return;
                 $.ajax({
-                    url: "{{ url('production-lineup/junctionbox/validate-barcode') }}",
+                    url: "{{ url('production-lineup/final-qc/validate-barcode') }}",
                     type: 'GET',
                     data: {
                         barCode: barCodeValue,
@@ -560,7 +579,7 @@
                 const barCodeValue = $(this).val();
                 const batchNo = $('#batch_No').val();
             
-                // validateBarcode(barCodeValue, batchNo);
+                validateBarcode(barCodeValue, batchNo);
             });
             // const hasPageParam = "{{ request()->get('page')=='ALL' ? '1' : '0' }}";
             // $(document).ready(function () {
@@ -589,7 +608,7 @@
                 console.log('Checking:', barCodeValue, batchNo); // debug
             
                 if (barCodeValue && batchNo) {
-                    // validateBarcode(barCodeValue, batchNo);
+                    validateBarcode(barCodeValue, batchNo);
                     showHint(batchNo);
                     return;
                 }
@@ -682,9 +701,96 @@
         });
     </script>
 
+    @php
+        $cellOptions = '<option value="">Select Cell</option>';
+
+        if (!empty($bushingMaterial)) {
+            $rows = (int) $bushingMaterial->cellRow;
+            $cols = (int) $bushingMaterial->celColumn;
+
+            if (!function_exists('numToColLetter')) {
+                function numToColLetter($num)
+                {
+                    $letters = '';
+                    while ($num > 0) {
+                        $remainder = ($num - 1) % 26;
+                        $letters = chr(65 + $remainder) . $letters;
+                        $num = intdiv($num - 1, 26);
+                    }
+                    return $letters;
+                }
+            }
+
+            for ($row = 1; $row <= $rows; $row++) {
+                $rowLetter = numToColLetter($row);   // Letter part
+            
+                for ($col = 1; $col <= $cols; $col++) {
+                    $value = "{$rowLetter}{$col}";  // A1, A2, B1...
+                    $cellOptions .= "<option value=\"{$value}\">{$value}</option>";
+                }
+            }
+        } else {
+            $cellOptions .= '<option disabled>No cell available</option>';
+        }
+
+        // Build options strings in PHP - simpler and more efficient
+        $dmgReasonOptions = '<option value="" selected>Select Reason</option>';
+        foreach ($DmgRsn ?? [] as $dmg) {
+            $dmgReasonOptions .= "<option value=\"{$dmg->mstr_type_name}\">{$dmg->mstr_type_name}</option>";
+        }
+
+        $dmgCatOptions = '<option value="" selected>Select Category</option>';
+        foreach ($DmgCat ?? [] as $dmg) {
+            $dmgCatOptions .= "<option value=\"{$dmg->mstr_type_name}\">{$dmg->mstr_type_name}</option>";
+        }
+
+        $userOptions = '<option value="">Select Employee</option>';
+        foreach ($userList ?? [] as $user) {
+            $userOptions .= "<option value=\"{$user->id}\">{$user->fullname}</option>";
+        }
+
+        $machineOptions = '<option value="" selected>Select Machine</option>';
+        foreach ($DmgMachine ?? [] as $dmg) {
+            $machineOptions .= "<option value=\"{$dmg->mstr_type_name}\">{$dmg->mstr_type_name}</option>";
+        }
+    @endphp
 
     <script>
-        // Simple approach - just use pre-built HTML strings from PHP 
+        // Simple approach - just use pre-built HTML strings from PHP
+        window.cellOptionsHtml = {!! json_encode($cellOptions) !!};
+        window.dmgReasonOptions = {!! json_encode($dmgReasonOptions) !!};
+        window.dmgCatOptions = {!! json_encode($dmgCatOptions) !!};
+        window.userOptions = {!! json_encode($userOptions) !!};
+        window.machineOptions = {!! json_encode($machineOptions) !!};
+
+        function numToColLetter(num) {
+            let letters = '';
+            while (num > 0) {
+                const remainder = (num - 1) % 26;
+                letters = String.fromCharCode(65 + remainder) + letters;
+                num = Math.floor((num - 1) / 26);
+            }
+            return letters;
+        }
+
+        function buildCellOptions(rows, cols) {
+            rows = parseInt(rows) || 0;
+            cols = parseInt(cols) || 0;
+            if (rows <= 0 || cols <= 0) {
+                return '<option disabled>No cell available</option>';
+            }
+            let opts = '<option value="">Select Cell</option>';
+            for (let r = 1; r <= rows; r++) {
+                const rowLetter = numToColLetter(r); // A, B, C...
+        
+                for (let c = 1; c <= cols; c++) {
+                    const v = `${rowLetter}${c}`; // A1, A2, B1...
+                    opts += `<option value="${v}">${v}</option>`;
+                }
+            }
+            return opts;
+        }
+
 
         function getDefBatchId(batchNo) {
             $('input[name="barCode"]').val('');
@@ -726,40 +832,23 @@
                 <tr>
                     <td>${rowCount}</td>
                     <td>
-                                                <select name="type[]" class="form-select w-px-150" required>
-                                                    <option value="">Select One</option>
-                                                    <option value="Positive JB">Positive JB</option>
-                                                    <option value="Negative JB">Negative JB</option>
-                                                    <option value="Middle JB">Middle JB</option>
-                                                    <option value="Glue">Glue</option>
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input type="text" name="size[]"
-                                                    class="form-control w-px-150" placeholder="0.5/1"
-                                                    inputmode="decimal"
-                                                    title="Enter a valid number (e.g., 1 or 0.5)">
-
-                                            </td>
-                                            <td>
-                                                <input type="text" name="brand[]"
-                                                    class="form-control  w-px-150" placeholder="Brand"
-                                                    inputmode="" 
-                                                    title="Enter a valid number (e.g., 1 or 0.5)">
-                                            </td>
-                                            <td>
-                                                <input type="text" name="qty[]"
-                                                    class="form-control  w-px-150" placeholder="Brand"
-                                                    inputmode="decimal" pattern="^\d+(\.\d+)?$"
-                                                    title="Enter a valid number (e.g., 1 or 0.5)">
-                                            </td>
-                                            <td>
-                                                <input type="text" name="uom[]"
-                                                    class="form-control  w-px-150" placeholder="UOM"
-                                                     
-                                                    title="Enter a valid number (e.g., 1 or 0.5)"
-                                                    oninput="">
-                                            </td>
+                        <select name="cell_position[]" class="form-select w-px-150 select2-dynamic" required></select>
+                    </td>
+                    <td>
+                        <input type="text" name="cell_qty[]" class="form-control invoice-item-price w-px-150" placeholder="0.5/1" inputmode="decimal" pattern="^\\d+(\\.\\d+)?$" title="Enter a valid number (e.g., 1 or 0.5)" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1');">
+                    </td>
+                    <td>
+                        <select name="dmgMat_cat[]" class="form-select select2-dynamic" required></select>
+                    </td>
+                    <td>
+                        <select name="dmgMat_reason[]" class="form-select select2-dynamic" required></select>
+                    </td>
+                    <td>
+                        <select class="form-select w-px-200 select2-dynamic" name="res_prsn[]" required></select>
+                    </td>
+                    <td>
+                        <select class="form-select w-px-200 select2-dynamic" name="res_machine[]" required></select>
+                    </td>
                     <td>
                         <a class="btn border-start-0 removeRow">
                             <i class="fa-duotone fa-solid fa-trash-can fa-xl" style="--fa-primary-color: #d94a0d; --fa-secondary-color: #e53446;"></i>
@@ -805,6 +894,114 @@
     </script>
 
     <script>
+        // $(document).ready(function() {
+        //     const bushingNo = $('#bushingNo').val();
+
+        //     $.ajax({
+        //         url: "{{ url('production-lineup/el-qc/getBushingMaterial') }}",
+        //         type: 'GET',
+        //         data: {
+        //             q: bushingNo
+        //         },
+        //         success: function(response) {
+        //             console.log('AJAX Response:', response);
+        //             $('#wattage').text(response.wattage || 'N/A');
+
+        //             const bushMaterialContainer = $('.bushmaterial');
+        //             bushMaterialContainer.empty();
+
+        //             const materials = response.materials || [];
+
+        //             if (materials.length > 0) {
+        //                 materials.forEach((material) => {
+        //                     let row = `
+        //                 <tr>
+        //                     <td class="text-dark">
+        //                         ${material.matname || 'N/A'}
+        //                         <input type="hidden" name="mat[]" value="${material.matid || ''}">
+        //                     </td>
+        //                     <td>
+        //                         <input type="text" class="form-control w-px-150" 
+        //                             value="${material.msize || 'N/A'}" 
+        //                             placeholder="Size" disabled>
+        //                     </td>
+        //                     <td>
+        //                         <input type="text" class="form-control w-px-150" 
+        //                             value="${material.mbrand || 'N/A'}" 
+        //                             placeholder="Brand" disabled>
+        //                     </td>
+        //                 </tr>
+        //             `;
+        //                     bushMaterialContainer.append(row);
+        //                 });
+
+        //                 bushMaterialContainer.find('select.select2').select2({
+        //                     width: '100%'
+        //                 });
+        //             } else {
+        //                 bushMaterialContainer.html(`
+        //             <tr>
+        //                 <td colspan="4" class="text-center text-danger">
+        //                     No Materials Found for the Selected Batch.
+        //                 </td>
+        //             </tr>
+        //         `);
+        //             }
+        //         },
+        //         error: function(xhr) {
+        //             console.error('Error fetching batch data:', xhr.responseText);
+        //             $('.bushmaterial').html(`
+        //         <tr>
+        //             <td colspan="4" class="text-center text-danger">
+        //                 Error Fetching Data. Please Try Again.
+        //             </td>
+        //         </tr>
+        //     `);
+        //         },
+        //     });
+        // });
+
+        // function getBushId(batchNo) {
+        //     $('#rfid2').val('');
+        //     $('#barcodeInput2').val('');
+        //     if (!batchNo) {
+        //         $('#bushingNo').html(
+        //             `<option value="" class="text-center text-danger">-- No Batch No. is Selected --</option>`
+        //         );
+        //         return;
+        //     }
+
+        //     $.ajax({
+        //         url: "{{ url('production-lineup/el-qc/getBushingId') }}",
+        //         type: 'GET',
+        //         data: {
+        //             q: batchNo
+        //         },
+        //         success: function(response) {
+        //             console.log('AJAX Response for Bushing IDs:', response);
+        //             const bushingSelect = $('#bushingNo');
+        //             bushingSelect.empty();
+
+        //             if (response.bushingIds && response.bushingIds.length > 0) {
+        //                 bushingSelect.append(
+        //                     `<option value="">--- Select BushingNo ---</option>`
+        //                 );
+        //                 response.bushingIds.forEach((bushing) => {
+        //                     bushingSelect.append(
+        //                         `<option value="${bushing.bushing_id}">${bushing.bushing_id}</option>`
+        //                     );
+        //                 });
+        //             } else {
+        //                 bushingSelect.html(
+        //                     `<option value="" class="text-center text-danger">-- No Bushing IDs Found --</option>`
+        //                 );
+        //             }
+        //         },
+        //         error: function(xhr) {
+        //             console.error('Error fetching Bushing IDs:', xhr.responseText);
+        //         },
+        //     });
+        // }
 
         function showHint(bushingNo) {
             if (!bushingNo) {
@@ -815,7 +1012,7 @@
             }
 
             $.ajax({
-                url: "{{ url('production-lineup/junctionbox/getBushingMaterial') }}",
+                url: "{{ url('production-lineup/final-qc/getBushingMaterial') }}",
                 type: 'GET',
                 data: {
                     q: bushingNo

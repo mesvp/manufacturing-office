@@ -579,7 +579,7 @@
                 const barCodeValue = $(this).val();
                 const batchNo = $('#batch_No').val();
             
-                validateBarcode(barCodeValue, batchNo);
+                // validateBarcode(barCodeValue, batchNo);
             });
             // const hasPageParam = "{{ request()->get('page')=='ALL' ? '1' : '0' }}";
             // $(document).ready(function () {
@@ -608,7 +608,7 @@
                 console.log('Checking:', barCodeValue, batchNo); // debug
             
                 if (barCodeValue && batchNo) {
-                    validateBarcode(barCodeValue, batchNo);
+                    // validateBarcode(barCodeValue, batchNo);
                     showHint(batchNo);
                     return;
                 }
