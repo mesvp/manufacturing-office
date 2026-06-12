@@ -77,7 +77,7 @@ class NinetyDeg_Controller extends Controller
               'b.fullname as elqc_incharge',
               'c.fullname as createdBy'
           ])
-          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_laminatorNo', '=', 'elqc.elqc_id')
+          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
           ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -302,7 +302,7 @@ class NinetyDeg_Controller extends Controller
               'b.fullname as elqc_incharge',
               'c.fullname as createdBy'
           ])
-          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_laminatorNo', '=', 'elqc.elqc_id')
+          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
           ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -515,7 +515,7 @@ class NinetyDeg_Controller extends Controller
               'b.fullname as elqc_incharge_name',
               'c.fullname as createdBy'
           ])
-          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_laminatorNo', '=', 'elqc.elqc_id')
+          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
           ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -1046,7 +1046,7 @@ class NinetyDeg_Controller extends Controller
                     'elqc_time'     => date('H:i:s'),
                     'elqc_operator' => $request->input('operator'),
                     'elqc_source'   => 'Layup',
-                    'elqc_bushingNo' => $bushId,
+                    'elqc_bushingNo' => $demoId,
                     'elqc_batchNo'  => $request->input('batchNo'),
                     'elqc_incharge' => $request->input('incharge'),
                     'elqc_shift'    => $request->input('shift'),

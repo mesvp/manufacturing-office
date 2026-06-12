@@ -80,7 +80,7 @@ class ElQC_Controller extends Controller
               'b.fullname as bushing_incherge_name',
               'c.fullname as createdBy'
           ])
-          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
           ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
@@ -171,7 +171,7 @@ class ElQC_Controller extends Controller
                 $join->on('elqc.elqc_id', '=', 'dmg.elqcId');
             })
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
             ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -261,7 +261,7 @@ class ElQC_Controller extends Controller
                 $join->on('elqc.elqc_id', '=', 'dmg.elqcId');
             })
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
             ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -340,7 +340,7 @@ class ElQC_Controller extends Controller
               'b.fullname as bushing_incherge_name',
               'c.fullname as createdBy'
           ])
-          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
           ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
@@ -431,7 +431,7 @@ class ElQC_Controller extends Controller
                 $join->on('elqc.elqc_id', '=', 'dmg.elqcId');
             })
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
             ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -521,7 +521,7 @@ class ElQC_Controller extends Controller
                 $join->on('elqc.elqc_id', '=', 'dmg.elqcId');
             })
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
             ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -586,7 +586,7 @@ class ElQC_Controller extends Controller
               'b.fullname as bushing_incherge_name',
               'c.fullname as createdBy'
           ])
-          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
           ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
@@ -702,7 +702,7 @@ class ElQC_Controller extends Controller
           ])
           ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-          ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+          ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
           ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
           ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
@@ -818,7 +818,7 @@ class ElQC_Controller extends Controller
           ])
           ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
           ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-          ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'elqc.elqc_bushingNo')
+          ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
           ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
           ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
           ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')

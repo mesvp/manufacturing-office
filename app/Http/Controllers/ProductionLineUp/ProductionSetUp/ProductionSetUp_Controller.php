@@ -249,37 +249,37 @@ class ProductionSetUp_Controller extends Controller
 		}
 
 		$sql = "SELECT 
-    psl.*,
-    psml.size AS efficiency,
-    psml.brand,
-    asl.stage_title,
-    phl.actionBy,
-    b.fullname AS actionByName,
-    c.fullname AS createdByName,
-    hr_mstr_shift.shift AS ShiftName
-FROM tbl_factory_production_setup_laravel as psl
-INNER JOIN tbl_factory_production_setup_material_laravel as psml 
-    ON psml.batchNo = psl.batchNo
-INNER JOIN tbl_factory_appr_stage_laravel as asl 
-    ON psl.stage = asl.id
-INNER JOIN hr_mstr_shift 
-    ON hr_mstr_shift.id = psl.fromShift
-LEFT JOIN (
-    SELECT phl1.*
-    FROM tbl_factory_productsetup_hist_laravel as phl1
-    WHERE phl1.id = (
-        SELECT MAX(phl2.id)
-        FROM tbl_factory_productsetup_hist_laravel as phl2
-        WHERE phl2.batchNo = phl1.batchNo
-    )
-) as phl 
-    ON phl.batchNo = psl.batchNo
-LEFT JOIN mstr_emp as b 
-    ON phl.actionBy = b.id
-LEFT JOIN mstr_emp as c 
-    ON psl.created_by = c.id
-WHERE psml.material = 1
-ORDER BY psl.created_at DESC";
+		psl.*,
+		psml.size AS efficiency,
+		psml.brand,
+		asl.stage_title,
+		phl.actionBy,
+		b.fullname AS actionByName,
+		c.fullname AS createdByName,
+		hr_mstr_shift.shift AS ShiftName
+		FROM tbl_factory_production_setup_laravel as psl
+		INNER JOIN tbl_factory_production_setup_material_laravel as psml 
+			ON psml.batchNo = psl.batchNo
+		INNER JOIN tbl_factory_appr_stage_laravel as asl 
+			ON psl.stage = asl.id
+		INNER JOIN hr_mstr_shift 
+			ON hr_mstr_shift.id = psl.fromShift
+		LEFT JOIN (
+			SELECT phl1.*
+			FROM tbl_factory_productsetup_hist_laravel as phl1
+			WHERE phl1.id = (
+				SELECT MAX(phl2.id)
+				FROM tbl_factory_productsetup_hist_laravel as phl2
+				WHERE phl2.batchNo = phl1.batchNo
+			)
+		) as phl 
+			ON phl.batchNo = psl.batchNo
+		LEFT JOIN mstr_emp as b 
+			ON phl.actionBy = b.id
+		LEFT JOIN mstr_emp as c 
+			ON psl.created_by = c.id
+		WHERE psml.material = 1
+		ORDER BY psl.created_at DESC";
         
         $data['AllLists'] = DB::select($sql);
 
@@ -352,8 +352,6 @@ ORDER BY psl.created_at DESC";
 	}
 
 
-
-    
 
     public function getFinishedGoodDataAjax(Request $request)
     {

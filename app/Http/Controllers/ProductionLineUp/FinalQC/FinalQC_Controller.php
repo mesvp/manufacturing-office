@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\ProductionLineUp\{FinalQC_Model, FinalQC_Defect_Model, FinalQC_Hist_Model};
 use App\Models\Production\{Production, ProductionBatch, ProductionData};
+use App\Models\ProductionLineUp\{JB_Model, JB_Damage_Model, JB_Hist_Model};
+use App\Models\ProductionLineUp\{NinetyDeg_Model, NinetyDeg_Model_RWRK, NinetyDegDamage_Model, NinetyDegDamage_Model_RWRK, NinetyDegHist_Model};
+use App\Models\ProductionLineUp\{EL_QC, EL_QC_Defect, EL_QC_RWRK, EL_QC_Defect_RWRK, EL_QC_History};
+use App\Models\ProductionLineUp\{Bushing_Model, BushingMaterial_Model, BushingDamageMaterial_Model};
+use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model};
 
 class FinalQC_Controller extends Controller
 {
@@ -84,7 +89,7 @@ class FinalQC_Controller extends Controller
           c.fullname AS createdBy
           FROM tbl_factory_jb_laravel AS jb
           LEFT JOIN tbl_factory_fqc_laravel AS fqc
-              ON fqc.fqc_QC = jb.jb_id
+              ON fqc.fqc_barcode = jb.jb_barcode
           LEFT JOIN hr_mstr_shift AS sh
               ON sh.id = jb.jb_shift
           LEFT JOIN tbl_factory_production_setup_laravel AS psl 
@@ -412,18 +417,18 @@ class FinalQC_Controller extends Controller
             }
 
             //ELQC Auto Entry
-            $exists = DB::table('tbl_factory_el_qc_laravel')
+            $existELs = DB::table('tbl_factory_el_qc_laravel')
             ->where('elqc_barcode', request()->input('barCode'))
             ->exists();
-            if ($exists == false) {
-
+            if ($existELs == false) {
+                
                 $data = array(
                     'elqc_id'       => $demoId,
                     'elqc_date'     => date('d-m-Y'),
                     'elqc_time'     => date('H:i:s'),
                     'elqc_operator' => $request->input('operator'),
                     'elqc_source'   => 'Layup',
-                    'elqc_bushingNo' => $bushId,
+                    'elqc_bushingNo' => $demoId,
                     'elqc_batchNo'  => $request->input('batchNo'),
                     'elqc_incharge' => $request->input('incharge'),
                     'elqc_shift'    => $request->input('shift'),

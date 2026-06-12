@@ -73,7 +73,7 @@ class JunctionBox_Controller extends Controller
                 'b.fullname as ninetydeg_incharge_name',
                 'c.fullname as createdBy'
             ])
-            ->leftJoin('tbl_factory_jb_laravel as jb', 'jb.jb_QC', '=', 'ninetydeg.ninetydeg_id')
+            ->leftJoin('tbl_factory_jb_laravel as jb', 'jb.jb_barcode', '=', 'ninetydeg.ninetydeg_barcode')
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
             ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
@@ -359,7 +359,7 @@ class JunctionBox_Controller extends Controller
                 'b.fullname as ninetydeg_incharge_name',
                 'c.fullname as createdBy'
             ])
-            ->leftJoin('tbl_factory_jb_laravel as jb', 'jb.jb_QC', '=', 'ninetydeg.ninetydeg_id')
+            ->leftJoin('tbl_factory_jb_laravel as jb', 'jb.jb_barcode', '=', 'ninetydeg.ninetydeg_barcode')
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
             ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
@@ -877,7 +877,7 @@ class JunctionBox_Controller extends Controller
                     'elqc_time'     => date('H:i:s'),
                     'elqc_operator' => $request->input('operator'),
                     'elqc_source'   => 'Layup',
-                    'elqc_bushingNo' => $bushId,
+                    'elqc_bushingNo' => $demoId,
                     'elqc_batchNo'  => $request->input('batchNo'),
                     'elqc_incharge' => $request->input('incharge'),
                     'elqc_shift'    => $request->input('shift'),
