@@ -230,7 +230,10 @@ Route::group(['prefix' => 'production-lineup',  'middleware' => 'auth:admin'], f
     Route::any('final-qc/passed', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'passedList']);
     Route::any('final-qc/rejected', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'rejectedList']);
         
-    
+    Route::any('final-qc-excel', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'pendingExcel']);
+    Route::any('final-qc-passed-excel', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'passedExcel']);
+    Route::any('final-qc-rejected-excel', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'rejectedExcel']);
+	
     Route::any('final-qc-all', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'indexAll']);
     
     

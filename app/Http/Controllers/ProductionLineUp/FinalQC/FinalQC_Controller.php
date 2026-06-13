@@ -270,6 +270,349 @@ class FinalQC_Controller extends Controller
     $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
     return view('ProductionLineUp.FinalQC.rejected', $data);
   }
+
+
+    public function pendingExcel(Request $request)
+    {
+        $data['menu'] = 'final-qc';
+
+        $query = DB::table('tbl_factory_jb_laravel as jb')
+            ->select([
+                'jb.*',
+                'psl.wattage',
+                'psml.size as cellSize',
+                'sh.shift as shiftdtl',
+                'a.fullname as jb_operator_name',
+                'b.fullname as jb_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('tbl_factory_fqc_laravel as fqc', 'fqc.fqc_QC', '=', 'jb.jb_id')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+            ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+            ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id')
+            ->whereNull('fqc.fqc_QC')
+            ->where('jb.status', 1);
+
+        // Filters
+        if ($request->filled('createdBy')) {
+            $query->where('jb.created_by', $request->createdBy);
+        }
+
+        if ($request->filled('operator')) {
+            $query->where('jb.jb_operator', $request->operator);
+        }
+
+        if ($request->filled('checker')) {
+            $query->where('jb.jb_incharge', $request->checker);
+        }
+
+        if ($request->filled('shift')) {
+            $query->where('jb.jb_shift', $request->shift);
+        }
+
+        if ($request->filled('fromDate')) {
+            $query->whereDate('jb.created_at', '>=', $request->fromDate);
+        }
+
+        if ($request->filled('toDate')) {
+            $query->whereDate('jb.created_at', '<=', $request->toDate);
+        }
+
+        if ($request->filled('batchNo')) {
+            $query->where('jb.jb_batchNo', $request->batchNo);
+        }
+
+        $AllLists = $query->groupBy('jb.jb_barcode')
+            ->orderBy('jb.created_at', 'DESC')
+            ->get();
+
+        $fileName = 'pending_FQC_report_' . date('Ymd_His') . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = [
+            'SL No',
+            'Date',
+            'Time',
+            'Shift',
+            'Bar Code',
+            'Batch No',
+            'Wattage',
+            'Cell Size',
+            'Operator',
+            'Incharge',
+            'Created By'
+        ];
+
+        $callback = function () use ($AllLists, $columns) {
+
+            $file = fopen('php://output', 'w');
+
+            // UTF-8 BOM
+            fputs($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($file, $columns);
+
+            foreach ($AllLists as $key => $row) {
+
+                fputcsv($file, [
+                    $key + 1,
+                    !empty($row->jb_date)
+                        ? \Carbon\Carbon::parse($row->jb_date)->format('d/m/Y')
+                        : '',
+                    !empty($row->jb_time)
+                        ? \Carbon\Carbon::parse($row->jb_time)->format('h:i A')
+                        : '',
+                    $row->shiftdtl,
+                    $row->jb_barcode,
+                    $row->jb_batchNo,
+                    $row->wattage,
+                    $row->cellSize,
+                    $row->jb_operator_name,
+                    $row->jb_incharge_name,
+                    $row->createdBy
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function passedExcel(Request $request)
+    {
+        $data['menu'] = 'final-qc';
+
+        $query = DB::table('tbl_factory_fqc_laravel as fqc')
+            ->select([
+                'fqc.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as fqc_operator_name',
+                'b.fullname as fqc_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'fqc.fqc_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'fqc.fqc_batchNo')
+            ->leftJoin('mstr_emp as a', 'fqc.fqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'fqc.fqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'fqc.created_by', '=', 'c.id')
+            ->where('fqc.status', 1);
+
+        // Filters
+        if ($request->filled('createdBy')) {
+            $query->where('fqc.created_by', $request->createdBy);
+        }
+
+        if ($request->filled('operator')) {
+            $query->where('fqc.fqc_operator', $request->operator);
+        }
+
+        if ($request->filled('checker')) {
+            $query->where('fqc.fqc_incharge', $request->checker);
+        }
+
+        if ($request->filled('shift')) {
+            $query->where('fqc.fqc_shift', $request->shift);
+        }
+
+        if ($request->filled('fromDate')) {
+            $query->whereDate('fqc.created_at', '>=', $request->fromDate);
+        }
+
+        if ($request->filled('toDate')) {
+            $query->whereDate('fqc.created_at', '<=', $request->toDate);
+        }
+
+        if ($request->filled('batchNo')) {
+            $query->where('fqc.fqc_batchNo', $request->batchNo);
+        }
+
+        $AllLists = $query->groupBy('fqc.fqc_id')
+            ->orderBy('fqc.created_at', 'DESC')
+            ->get();
+
+        $fileName = 'passed_FQC_report_' . date('Ymd_His') . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = [
+            'SL No',
+            'Date',
+            'Time',
+            'Shift',
+            'Bar Code',
+            'Batch No',
+            'Wattage',
+            'Operator',
+            'Incharge',
+            'Created By'
+        ];
+
+        $callback = function () use ($AllLists, $columns) {
+
+            $file = fopen('php://output', 'w');
+
+            // UTF-8 BOM
+            fputs($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header Row
+            fputcsv($file, $columns);
+
+            foreach ($AllLists as $key => $row) {
+
+                fputcsv($file, [
+                    $key + 1,
+                    !empty($row->fqc_date)
+                        ? \Carbon\Carbon::parse($row->fqc_date)->format('d/m/Y')
+                        : '',
+                    !empty($row->fqc_time)
+                        ? \Carbon\Carbon::parse($row->fqc_time)->format('h:i A')
+                        : '',
+                    $row->shiftdtl,
+                    $row->fqc_barcode,
+                    $row->fqc_batchNo,
+                    $row->wattage,
+                    $row->fqc_operator_name,
+                    $row->fqc_incharge_name,
+                    $row->createdBy
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function rejectedExcel(Request $request)
+    {
+        $data['menu'] = 'final-qc';
+
+        $query = DB::table('tbl_factory_fqc_laravel as fqc')
+            ->select([
+                'fqc.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as fqc_operator_name',
+                'b.fullname as fqc_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'fqc.fqc_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'fqc.fqc_batchNo')
+            ->leftJoin('mstr_emp as a', 'fqc.fqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'fqc.fqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'fqc.created_by', '=', 'c.id')
+            ->where('fqc.status', '<>', 1);
+
+        // Filters
+        if ($request->filled('createdBy')) {
+            $query->where('fqc.created_by', $request->createdBy);
+        }
+
+        if ($request->filled('operator')) {
+            $query->where('fqc.fqc_operator', $request->operator);
+        }
+
+        if ($request->filled('checker')) {
+            $query->where('fqc.fqc_incharge', $request->checker);
+        }
+
+        if ($request->filled('shift')) {
+            $query->where('fqc.fqc_shift', $request->shift);
+        }
+
+        if ($request->filled('fromDate')) {
+            $query->whereDate('fqc.created_at', '>=', $request->fromDate);
+        }
+
+        if ($request->filled('toDate')) {
+            $query->whereDate('fqc.created_at', '<=', $request->toDate);
+        }
+
+        if ($request->filled('batchNo')) {
+            $query->where('fqc.fqc_batchNo', $request->batchNo);
+        }
+
+        $AllLists = $query->groupBy('fqc.fqc_id')
+            ->orderBy('fqc.created_at', 'DESC')
+            ->get();
+
+        $fileName = 'rejected_FQC_report_' . date('Ymd_His') . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = [
+            'SL No',
+            'Date',
+            'Time',
+            'Shift',
+            'Bar Code',
+            'Batch No',
+            'Wattage',
+            'Operator',
+            'Incharge',
+            'Created By',
+            'Status'
+        ];
+
+        $callback = function () use ($AllLists, $columns) {
+
+            $file = fopen('php://output', 'w');
+
+            // UTF-8 BOM
+            fputs($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($file, $columns);
+
+            foreach ($AllLists as $key => $row) {
+
+                fputcsv($file, [
+                    $key + 1,
+                    !empty($row->fqc_date)
+                        ? \Carbon\Carbon::parse($row->fqc_date)->format('d/m/Y')
+                        : '',
+                    !empty($row->fqc_time)
+                        ? \Carbon\Carbon::parse($row->fqc_time)->format('h:i A')
+                        : '',
+                    $row->shiftdtl,
+                    $row->fqc_barcode,
+                    $row->fqc_batchNo,
+                    $row->wattage,
+                    $row->fqc_operator_name,
+                    $row->fqc_incharge_name,
+                    $row->createdBy,
+                    $row->status
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
   
   
   public function indexAll()
