@@ -7,11 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\ProductionLineUp\{FinalQC_Model, FinalQC_Defect_Model, FinalQC_Hist_Model};
 use App\Models\Production\{Production, ProductionBatch, ProductionData};
-use App\Models\ProductionLineUp\{JB_Model, JB_Damage_Model, JB_Hist_Model};
-use App\Models\ProductionLineUp\{NinetyDeg_Model, NinetyDeg_Model_RWRK, NinetyDegDamage_Model, NinetyDegDamage_Model_RWRK, NinetyDegHist_Model};
-use App\Models\ProductionLineUp\{EL_QC, EL_QC_Defect, EL_QC_RWRK, EL_QC_Defect_RWRK, EL_QC_History};
-use App\Models\ProductionLineUp\{Bushing_Model, BushingMaterial_Model, BushingDamageMaterial_Model};
-use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model};
 
 class FinalQC_Controller extends Controller
 {
@@ -47,92 +42,233 @@ class FinalQC_Controller extends Controller
 
       return $ip;
   }
-  public function index()
+  public function index(Request $request)
+  {
+        $data['menu'] = 'final-qc';
+
+        $data['ShiftMaster'] = DB::table('hr_mstr_shift')
+          ->select('hr_mstr_shift.*')
+          ->get();
+
+        $data['userList'] = DB::table('mstr_emp')
+          ->select('mstr_emp.id', 'mstr_emp.fullname')
+          ->where('mstr_emp.status', '1')
+          ->get();
+
+        $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
+          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+          ->get();
+
+      $query = DB::table('tbl_factory_jb_laravel as jb')
+        ->select([
+            'jb.*',
+            'psl.wattage',
+            'psml.size as cellSize',
+            'sh.shift as shiftdtl',
+            'a.fullname as jb_operator_name',
+            'b.fullname as jb_incharge_name',
+            'c.fullname as createdBy'
+        ])
+        ->leftJoin('tbl_factory_fqc_laravel as fqc', 'fqc.fqc_QC', '=', 'jb.jb_id')
+        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+        ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id')
+        ->whereNull('fqc.fqc_QC')
+        ->where('jb.status', 1);
+
+    // 2. Dynamically apply filters safely (using bindings automatically)
+    if ($request->filled('createdBy')) {
+        $query->where('jb.created_by', $request->input('createdBy'));
+    }
+
+    if ($request->filled('operator')) {
+        $query->where('jb.jb_operator', $request->input('operator'));
+    }
+
+    if ($request->filled('checker')) {
+        $query->where('jb.jb_incharge', $request->input('checker'));
+    }
+
+    if ($request->filled('shift')) {
+        $query->where('jb.jb_shift', $request->input('shift'));
+    }
+
+    if ($request->filled('fromDate')) {
+        $query->whereRaw("CAST(jb.created_at AS DATE) >= ?", [$request->input('fromDate')]);
+    }
+
+    if ($request->filled('toDate')) {
+        $query->whereRaw("CAST(jb.created_at AS DATE) <= ?", [$request->input('toDate')]);
+    }
+
+    if ($request->filled('batchNo')) {
+        $query->where('jb.jb_batchNo', $request->input('batchNo'));
+    }
+
+    // 3. Apply Grouping, Ordering, and Pagination
+    // Adjust pagination number (e.g., 15) to whatever your UI needs
+    $data['AllLists'] = $query->groupBy('jb.jb_barcode') 
+    ->orderBy('jb.created_at', 'desc')
+    ->paginate(15);
+
+
+    $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
+    return view('ProductionLineUp.FinalQC.index', $data);
+  }
+  public function passedList(Request $request)
+  {
+        $data['menu'] = 'final-qc';
+
+        $data['ShiftMaster'] = DB::table('hr_mstr_shift')
+          ->select('hr_mstr_shift.*')
+          ->get();
+
+        $data['userList'] = DB::table('mstr_emp')
+          ->select('mstr_emp.id', 'mstr_emp.fullname')
+          ->where('mstr_emp.status', '1')
+          ->get();
+
+        $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
+          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+          ->get();
+
+
+        $query = DB::table('tbl_factory_fqc_laravel as fqc')
+            ->select([
+                'fqc.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as fqc_operator_name',
+                'b.fullname as fqc_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'fqc.fqc_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'fqc.fqc_batchNo')
+            ->leftJoin('mstr_emp as a', 'fqc.fqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'fqc.fqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'fqc.created_by', '=', 'c.id')
+            ->where('fqc.status', 1);
+
+        // 2. If your initial $Condition string had other default conditions, add them here.
+        // e.g., $query->where('some_col', 'some_val');
+
+        // 3. Dynamically apply filters safely using Laravel's Request
+        if ($request->filled('createdBy')) {
+            $query->where('fqc.created_by', $request->input('createdBy'));
+        }
+
+        if ($request->filled('operator')) {
+            $query->where('fqc.fqc_operator', $request->input('operator'));
+        }
+
+        if ($request->filled('checker')) {
+            $query->where('fqc.fqc_incharge', $request->input('checker'));
+        }
+
+        if ($request->filled('shift')) {
+            $query->where('fqc.fqc_shift', $request->input('shift'));
+        }
+
+        if ($request->filled('fromDate')) {
+            $query->whereRaw("CAST(fqc.created_at AS DATE) >= ?", [$request->input('fromDate')]);
+        }
+
+        if ($request->filled('toDate')) {
+            $query->whereRaw("CAST(fqc.created_at AS DATE) <= ?", [$request->input('toDate')]);
+        }
+
+        if ($request->filled('batchNo')) {
+            $query->where('fqc.fqc_batchNo', $request->input('batchNo'));
+        }
+
+        // 4. Apply Grouping, Ordering, and Pagination
+        // Change '15' to whatever number of items you want per page
+        $data['AllLaminatorLists'] = $query->groupBy('fqc.fqc_id')
+            ->orderBy('fqc.created_at', 'desc')
+            ->paginate(15);
+
+        $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
+        return view('ProductionLineUp.FinalQC.passed', $data);
+  }
+  public function rejectedList(Request $request)
   {
       $data['menu'] = 'final-qc';
 
-      $Condition = 'fqc.fqc_QC IS NULL AND jb.status = 1';
-      $Cond = [];
+      $data['ShiftMaster'] = DB::table('hr_mstr_shift')
+          ->select('hr_mstr_shift.*')
+          ->get();
 
-      if (isset($_GET['createdBy']) && $_GET['createdBy'] != '') {
-          $Cond[] = "jb.created_by = '" . $_GET['createdBy'] . "'";
-      }
-      if (isset($_GET['operator']) && $_GET['operator'] != '') {
-          $Cond[] = "jb.jb_operator = '" . $_GET['operator'] . "'";
-      }
-      if (isset($_GET['checker']) && $_GET['checker'] != '') {
-          $Cond[] = "jb.jb_incharge = '" . $_GET['checker'] . "'";
-      }
-      if (isset($_GET['shift']) && $_GET['shift'] != '') {
-          $Cond[] = "jb.jb_shift = '" . $_GET['shift'] . "'";
-      }
-      if (isset($_GET['fromDate']) && $_GET['fromDate'] != '') {
-          $Cond[] = "CAST(jb.created_at AS DATE) >= '" . $_GET['fromDate'] . "'";
-      }
-      if (isset($_GET['toDate']) && $_GET['toDate'] != '') {
-          $Cond[] = "CAST(jb.created_at AS DATE) <= '" . $_GET['toDate'] . "'";
-      }
-      if (isset($_GET['batchNo']) && $_GET['batchNo'] != '') {
-          $Cond[] = "jb.jb_batchNo = '" . $_GET['batchNo'] . "'";
-      }
-      if (count($Cond) > 0) {
-          $Condition = $Condition . ' AND ' . implode(' AND ', $Cond);
-      }
+        $data['userList'] = DB::table('mstr_emp')
+          ->select('mstr_emp.id', 'mstr_emp.fullname')
+          ->where('mstr_emp.status', '1')
+          ->get();
 
-      $sql = "SELECT 
-          jb.*,
-          psl.wattage,
-          psml.size AS cellSize,
-          sh.shift AS shiftdtl,
-          a.fullname AS jb_operator,
-          b.fullname AS jb_incharge,
-          c.fullname AS createdBy
-          FROM tbl_factory_jb_laravel AS jb
-          LEFT JOIN tbl_factory_fqc_laravel AS fqc
-              ON fqc.fqc_barcode = jb.jb_barcode
-          LEFT JOIN hr_mstr_shift AS sh
-              ON sh.id = jb.jb_shift
-          LEFT JOIN tbl_factory_production_setup_laravel AS psl 
-              ON psl.batchNo = jb.jb_batchNo
-          LEFT JOIN tbl_factory_production_setup_material_laravel AS psml 
-              ON psml.batchNo = psl.batchNo
-          LEFT JOIN mstr_emp AS a 
-              ON jb.jb_operator = a.id
-          LEFT JOIN mstr_emp AS b
-              ON jb.jb_incharge = b.id
-          LEFT JOIN mstr_emp AS c
-              ON jb.created_by = c.id
-          WHERE $Condition
-          GROUP BY jb.jb_barcode 
-          ORDER BY jb.created_at DESC";
-      // dd($sql);
-      $data['AllLists'] = DB::select($sql);
+        $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
+          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+          ->get();
 
-      $sql = "SELECT 
-      fqc.*,
-      psl.wattage,
-      sh.shift AS shiftdtl,
-      a.fullname AS fqc_operator,
-      b.fullname AS fqc_incharge,
-      c.fullname AS createdBy
-      FROM tbl_factory_fqc_laravel AS fqc
-      LEFT JOIN hr_mstr_shift AS sh 
-          ON sh.id = fqc.fqc_shift
-      LEFT JOIN tbl_factory_production_setup_laravel AS psl 
-          ON psl.batchNo = fqc.fqc_batchNo
-      LEFT JOIN mstr_emp AS a 
-          ON fqc.fqc_operator = a.id 
-      LEFT JOIN mstr_emp AS b 
-          ON fqc.fqc_incharge = b.id
-      LEFT JOIN mstr_emp AS c 
-          ON fqc.created_by = c.id
-      GROUP BY fqc.fqc_id
-      ORDER BY fqc.created_at DESC";
-      // dd($sql);
-      $data['AllLaminatorLists'] = DB::select($sql);
+      $query = DB::table('tbl_factory_fqc_laravel as fqc')
+        ->select([
+            'fqc.*',
+            'psl.wattage',
+            'sh.shift as shiftdtl',
+            'a.fullname as fqc_operator_name',
+            'b.fullname as fqc_incharge_name',
+            'c.fullname as createdBy'
+        ])
+        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'fqc.fqc_shift')
+        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'fqc.fqc_batchNo')
+        ->leftJoin('mstr_emp as a', 'fqc.fqc_operator', '=', 'a.id')
+        ->leftJoin('mstr_emp as b', 'fqc.fqc_incharge', '=', 'b.id')
+        ->leftJoin('mstr_emp as c', 'fqc.created_by', '=', 'c.id')
+        ->where('fqc.status', '<>', 1);
 
-        $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
-      return view('ProductionLineUp.FinalQC.index', $data);
+    // 2. If your initial $Condition string had other default conditions, add them here.
+    // e.g., $query->where('some_col', 'some_val');
+
+    // 3. Dynamically apply filters safely using Laravel's Request
+    if ($request->filled('createdBy')) {
+        $query->where('fqc.created_by', $request->input('createdBy'));
+    }
+
+    if ($request->filled('operator')) {
+        $query->where('fqc.fqc_operator', $request->input('operator'));
+    }
+
+    if ($request->filled('checker')) {
+        $query->where('fqc.fqc_incharge', $request->input('checker'));
+    }
+
+    if ($request->filled('shift')) {
+        $query->where('fqc.fqc_shift', $request->input('shift'));
+    }
+
+    if ($request->filled('fromDate')) {
+        $query->whereRaw("CAST(fqc.created_at AS DATE) >= ?", [$request->input('fromDate')]);
+    }
+
+    if ($request->filled('toDate')) {
+        $query->whereRaw("CAST(fqc.created_at AS DATE) <= ?", [$request->input('toDate')]);
+    }
+
+    if ($request->filled('batchNo')) {
+        $query->where('fqc.fqc_batchNo', $request->input('batchNo'));
+    }
+
+    // 4. Apply Grouping, Ordering, and Pagination
+    // Change '15' to whatever number of items you want per page
+    $data['AllLaminatorLists'] = $query->groupBy('fqc.fqc_id')
+        ->orderBy('fqc.created_at', 'desc')
+        ->paginate(15);
+
+    $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
+    return view('ProductionLineUp.FinalQC.rejected', $data);
   }
   
   
@@ -417,18 +553,18 @@ class FinalQC_Controller extends Controller
             }
 
             //ELQC Auto Entry
-            $existELs = DB::table('tbl_factory_el_qc_laravel')
+            $exists = DB::table('tbl_factory_el_qc_laravel')
             ->where('elqc_barcode', request()->input('barCode'))
             ->exists();
-            if ($existELs == false) {
-                
+            if ($exists == false) {
+
                 $data = array(
                     'elqc_id'       => $demoId,
                     'elqc_date'     => date('d-m-Y'),
                     'elqc_time'     => date('H:i:s'),
                     'elqc_operator' => $request->input('operator'),
                     'elqc_source'   => 'Layup',
-                    'elqc_bushingNo' => $demoId,
+                    'elqc_bushingNo' => $bushId,
                     'elqc_batchNo'  => $request->input('batchNo'),
                     'elqc_incharge' => $request->input('incharge'),
                     'elqc_shift'    => $request->input('shift'),

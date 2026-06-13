@@ -227,6 +227,8 @@ Route::group(['prefix' => 'production-lineup',  'middleware' => 'auth:admin'], f
     
     
     Route::any('final-qc', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'index']);
+    Route::any('final-qc/passed', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'passedList']);
+    Route::any('final-qc/rejected', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'rejectedList']);
         
     
     Route::any('final-qc-all', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'indexAll']);
