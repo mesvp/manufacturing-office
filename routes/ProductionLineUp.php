@@ -276,12 +276,12 @@ Route::group(['prefix' => 'production-lineup',  'middleware' => 'auth:admin'], f
 
   //Master-> Plant Capacity
   	Route::any('master/plant_capacity', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'index']);
-	Route::any('master/plant-capacity/approval-list', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'Approval_list']);
-	Route::any('master/plant-capacity/add', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'add']);
-	Route::post('master/plant-capacity/insert', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'insert']);
-	Route::get('master/plant-capacity/view-details/{value}', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'viewDetails']);
-	Route::get('master/plant-capacity/approve/{value}', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'approveDtls']);
-	Route::post('master/plant-capacity/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'approvalAction']);
+	Route::any('master/plant_capacity/approval-list', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'Approval_list']);
+	Route::any('master/plant_capacity/add', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'add']);
+	Route::post('master/plant_capacity/insert', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'insert']);
+	Route::get('master/plant_capacity/view-details/{value}', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'viewDetails']);
+	Route::get('master/plant_capacity/approve/{value}', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'approveDtls']);
+	Route::post('master/plant_capacity/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'approvalAction']);
    
 });
 
