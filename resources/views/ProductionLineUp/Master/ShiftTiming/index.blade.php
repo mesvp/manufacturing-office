@@ -1,7 +1,7 @@
 @extends('includes.layout')
 
 @section('pageHeading')
-    Plant Capacity Master List
+    Shift Timing Master List
 @endsection
 
 @section('content')
@@ -11,7 +11,7 @@
 
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center bg-label-primary py-1">
-                        <h5 class="mb-0">Plant Capacity Master List :</h5>
+                        <h5 class="mb-0">Shift Timing Master List :</h5>
                         <div class="text-end">
                             <button type="button" class="ms-2 btn  btn-primary btn-sm waves-effect waves-light"
                                 data-bs-toggle="modal" data-bs-target="#exampleModal">
@@ -32,12 +32,8 @@
                                         <div class="modal-body row">
                                             <div class="mb-3 col-sm-12">
                                                 <label for="material_name" class="form-label">Plant Name</label>
-                                                <select class="select2 form-select" name="plant_name" required>
-                                                    <option value="">Select Plant</option>
-                                                    @foreach($PlantMaster as $plant)
-                                                    <option value="{{ $plant->mstr_type_name }}">{{ $plant->mstr_type_name }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <input type="text" class="form-control" id="material_name" name="plant_name"
+                                                    placeholder="Enter Material Name" required>
                                             </div>
                                             <div class="mb-3 col-sm-6">
                                                 <label for="uom" class="form-label">Hourly Capacity Nos</label>

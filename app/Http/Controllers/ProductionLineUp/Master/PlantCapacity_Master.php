@@ -65,10 +65,10 @@ class PlantCapacity_Master extends Controller
 					ON pcl.stage = asl.id
 			LEFT JOIN (
 					SELECT phl1.*
-					FROM tbl_factory_plant_capacity_laravel AS phl1
+					FROM tbl_factory_plant_capacity_hist_laravel AS phl1
 					WHERE phl1.id = (
 							SELECT MAX(phl2.id)
-							FROM tbl_factory_plant_capacity_laravel AS phl2
+							FROM tbl_factory_plant_capacity_hist_laravel AS phl2
 							WHERE phl2.mainTableId = phl1.mainTableId
 					)
 			) AS phl 
@@ -129,7 +129,7 @@ class PlantCapacity_Master extends Controller
 			'monthlyMW'     => request()->input('mcapacitymw'),
 			'yearlyNos'     => request()->input('ycapacitynos'),
 			'yearlyMW'      => request()->input('ycapacitymw'),
-			'status'        => '0',
+			'status'        => '1',
 			'stage'         => $stage['id'],
 			'created_by'    => request()->session()->get('empId')
 		);

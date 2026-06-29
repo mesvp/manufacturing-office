@@ -605,7 +605,7 @@ foreach($PermittedMenuList as $menuList){
         {{-- master menus start --}}
         
         @php
-            $menuArr3 = ['material', 'uoms', 'pallete', 'plant-capacity'];
+            $menuArr3 = ['material', 'uoms', 'pallete', 'plant-capacity', 'plant-target', 'shift-timing'];
         @endphp
 
         <?php if(in_array('material',$menu_fetch)): ?>
@@ -628,6 +628,16 @@ foreach($PermittedMenuList as $menuList){
                 <li class="menu-item {{ $menu == 'plant-capacity' ? 'active' : '' }}">
                     <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/master/plant_capacity') }}" class="menu-link">
                         <div data-i18n="Plant Capacity"> Plant Capacity</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ $menu == 'plant-target' ? 'active' : '' }}">
+                    <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/master/plant_target') }}" class="menu-link">
+                        <div data-i18n="Plant Target"> Plant Target</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ $menu == 'shift-timing' ? 'active' : '' }}">
+                    <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/master/shift_timing') }}" class="menu-link">
+                        <div data-i18n="Shift Timing"> Shift Timing</div>
                     </a>
                 </li>
                 {{-- <li class="menu-item {{ $menu == 'uoms' ? 'active' : '' }}">

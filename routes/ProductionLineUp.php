@@ -275,13 +275,19 @@ Route::group(['prefix' => 'production-lineup',  'middleware' => 'auth:admin'], f
   
 
   //Master-> Plant Capacity
-  	Route::any('master/plant_capacity', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'index']);
-	Route::any('master/plant_capacity/approval-list', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'Approval_list']);
-	Route::any('master/plant_capacity/add', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'add']);
+  Route::any('master/plant_capacity', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'index']);
 	Route::post('master/plant_capacity/insert', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'insert']);
-	Route::get('master/plant_capacity/view-details/{value}', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'viewDetails']);
-	Route::get('master/plant_capacity/approve/{value}', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'approveDtls']);
 	Route::post('master/plant_capacity/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'approvalAction']);
+   
+  //Master-> Plant Target
+  Route::any('master/plant_target', [App\Http\Controllers\ProductionLineUp\Master\PlantTarget_Master::class, 'index']);
+	Route::post('master/plant_target/insert', [App\Http\Controllers\ProductionLineUp\Master\PlantTarget_Master::class, 'insert']);
+	Route::post('master/plant_target/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\PlantTarget_Master::class, 'approvalAction']);
+   
+  //Master-> Shift Timing
+  Route::any('master/shift_timing', [App\Http\Controllers\ProductionLineUp\Master\ShiftTiming_Master::class, 'index']);
+	Route::post('master/shift_timing/insert', [App\Http\Controllers\ProductionLineUp\Master\ShiftTiming_Master::class, 'insert']);
+	Route::post('master/shift_timing/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\ShiftTiming_Master::class, 'approvalAction']);
    
 });
 
