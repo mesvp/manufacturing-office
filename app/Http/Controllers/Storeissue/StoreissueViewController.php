@@ -211,6 +211,10 @@ class StoreissueViewController extends Controller
     {
         $userID = auth()->user()->id;
         $admin=Admin::where('role',1)->get();
+        $admin = Admin::where([
+            'role' => '1',
+            'status' => '1'
+        ])->get();
         $Organization_Name = prj_organisation::all();
         $Manufacturing_Unit = prj_project::all();
         $Plant_Name = Prj_Subproject::all();

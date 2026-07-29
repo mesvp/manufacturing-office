@@ -188,6 +188,7 @@
                                                 <td>Bus Bar</td>
                                                 <td>Operator</td>
                                                 <td>Incharge</td>
+                                                <td>Grade</td>
                                                 <td>Action</td>
                                             </tr>
                                         </thead>
@@ -206,6 +207,7 @@
                                                         <td>{{ $item->bus_bar ?? '-' }}</td>
                                                         <td>{{ $item->fqc_operator_name ?? '-' }}</td>
                                                         <td>{{ $item->fqc_incharge_name ?? '-' }}</td>
+                                                        <td>{{ $item->scan_grade }}</td>
                                                         <td>
                                                             <a class="btn btn-primary btn-xs text-capitalize waves-effect waves-light"
                                                                 href="{{ route('fqc-view', ['id' => $item->fqc_id]) }}?page=VIEW" role="button"><i class="mdi mdi-eye"></i>

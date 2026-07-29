@@ -866,11 +866,17 @@ class GatePassViewController extends Controller
         $query->where('bill_no', $request->input('bill_no'));
     }
 
-    // ✅ Pagination applied here
-    $materialdata = $query
-        ->with(['outGatepassDatas', 'inGatepassAttachs'])
-        ->paginate(10)
-        ->appends($request->all());
+    // ✅ Pagination applied here (skipped for export)
+        if ($export == 1) {
+            $materialdata = $query
+                ->with(['outGatepassDatas', 'inGatepassAttachs'])
+                ->get();
+        } else {
+            $materialdata = $query
+                ->with(['outGatepassDatas', 'inGatepassAttachs'])
+                ->paginate(10)
+                ->appends($request->all());
+        }
 
     // ✅ Modify records WITHOUT breaking pagination
     foreach ($materialdata as $val) {
@@ -1492,7 +1498,7 @@ class GatePassViewController extends Controller
         $mat_details = DB::table('prj_dispatch_material')
             ->join('prj_material', 'prj_dispatch_material.trnst_matid', '=', 'prj_material.id')
             ->select('prj_dispatch_material.*', 'prj_material.material_name')
-            ->whereIn('unique_id', $invoice_details->pluck('unique_id'))
+            ->whereIn('prj_dispatch_material.unique_id', $invoice_details->pluck('unique_id'))
             ->get();
 
         if ($invoice_details) {

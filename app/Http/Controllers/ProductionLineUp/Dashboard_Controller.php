@@ -147,8 +147,51 @@ class Dashboard_Controller extends Controller
         $query->whereDate('fqc.created_at', '=', now()->toDateString()); // Clean Laravel helper for date('Y-m-d')
     }
     $data['FQC'] = $query->get();
-      
     
+    
+    // G E T   L I N E    E F F I C I E N C Y   R E P O R T   D A T A
+    
+    $tDate = date('d-m-Y');
+    
+    $bushing_sql = "SELECT COUNT(`bushing_barCode`) as totalNo, `bushing_batchNo`, `bushing_barCode`, psl.wattage, `bushing_shift` 
+                FROM `tbl_factory_bushing_laravel` 
+                INNER JOIN tbl_factory_production_setup_laravel AS psl ON psl.batchNo = tbl_factory_bushing_laravel.bushing_batchNo 
+                WHERE `bushing_date` = '$tDate' 
+                GROUP BY `bushing_shift`, `bushing_batchNo`";
+    $data['efficiencyBushing'] = DB::select($bushing_sql);
+    
+    $el_sql = "SELECT COUNT(`elqc_barcode`) as totalNo, `elqc_batchNo`, `elqc_barcode`, psl.wattage, `elqc_shift` 
+                FROM `tbl_factory_el_qc_laravel` 
+                INNER JOIN tbl_factory_production_setup_laravel AS psl ON psl.batchNo = tbl_factory_el_qc_laravel.elqc_batchNo 
+                WHERE `elqc_date` = '$tDate' AND tbl_factory_el_qc_laravel.`status` = 1 
+                GROUP BY `elqc_shift`, `elqc_batchNo`";
+    $data['efficiencyEL'] = DB::select($el_sql);
+    
+    $ninety_sql = "SELECT COUNT(`ninetydeg_barcode`) as totalNo, `ninetydeg_batchNo`, `ninetydeg_barcode`, psl.wattage, `ninetydeg_shift` 
+                   FROM `tbl_factory_ninetydeg_laravel` 
+                   INNER JOIN tbl_factory_production_setup_laravel AS psl ON psl.batchNo = tbl_factory_ninetydeg_laravel.ninetydeg_batchNo 
+                   WHERE `ninetydeg_date` = '$tDate' AND tbl_factory_ninetydeg_laravel.`status` = 1 
+                   GROUP BY `ninetydeg_shift`, `ninetydeg_batchNo`";
+    $data['efficiencyNinety'] = DB::select($ninety_sql);
+    
+    $jb_sql = "SELECT COUNT(`jb_barcode`) as totalNo, `jb_batchNo`, `jb_barcode`, psl.wattage, `jb_shift` 
+                FROM `tbl_factory_jb_laravel` 
+                INNER JOIN tbl_factory_production_setup_laravel AS psl ON psl.batchNo = tbl_factory_jb_laravel.jb_batchNo 
+                WHERE `jb_date` = '$tDate' AND tbl_factory_jb_laravel.`status` = 1 
+                GROUP BY `jb_shift`, `jb_batchNo`";
+    $data['efficiencyJB'] = DB::select($jb_sql);
+    
+    $fqc_sql = "SELECT COUNT(`fqc_barcode`) as totalNo, `fqc_batchNo`, `fqc_barcode`, psl.wattage, `fqc_shift` 
+                FROM `tbl_factory_fqc_laravel` 
+                INNER JOIN tbl_factory_production_setup_laravel AS psl ON psl.batchNo = tbl_factory_fqc_laravel.fqc_batchNo 
+                WHERE `fqc_date` = '$tDate' AND tbl_factory_fqc_laravel.`status` = 1 
+                GROUP BY `fqc_shift`, `fqc_batchNo`";
+    $data['efficiencyFQC'] = DB::select($fqc_sql);
+     // exit;
+      
+    $data['ShiftMaster'] = DB::table('hr_mstr_shift')
+			->select('hr_mstr_shift.*')
+			->get();
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.dashboard',$data);
     }

@@ -27,6 +27,8 @@ class FinalQC_Model extends Model
         'fqc_barcode',
         'status',
         'fqc_pDefectRsn',
-        'created_by'
+        'created_by',
+        'scan_grade',
+        'scan_flag'
     ];
 }

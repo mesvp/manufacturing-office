@@ -52,6 +52,10 @@
                         <div class="text-end">
                             <a href="{{ route('add-junctionbox', ['page' => 'ALL']) }}" class="ms-2 btn  btn-primary btn-sm waves-effect waves-light"><span
                                     class="mdi mdi-playlist-plus me-1"></span> Add Junction Box</a>
+                                    
+                            <a href="{{ url('production-lineup/junctionbox/rejected-excel') . '?' . http_build_query(request()->all()) }}"
+                                class="btn btn-primary buttons-excel buttons-html5">
+                                <span><i class='fas fa-file-excel'></i> Excel</span></a>
                         </div>
                     </div>
                     <div class="card-body">

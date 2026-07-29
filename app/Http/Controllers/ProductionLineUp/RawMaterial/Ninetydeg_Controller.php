@@ -56,6 +56,8 @@ class Ninetydeg_Controller extends Controller
       $data['pageTitle'] = 'Pending Raw Material at 90 Degree QC Stage List Details';
       $data['reportTitle'] = 'Pending Raw Material at 90 Degree QC Stage';
       $data['detailsLink'] = 'production-lineup/raw-material-report/pending-raw-material-90deg/view-details';
+      
+      $data['excelLink'] = 'production-lineup/raw-material-report/pending-raw-material-90deg/excel';
         
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.RawMaterial.raw-material-pending-report', $data);
@@ -132,6 +134,8 @@ class Ninetydeg_Controller extends Controller
       
       $data['detailsLink'] = 'production-lineup/raw-material-report/consumed-raw-material-90deg/view-details';
         
+      $data['excelLink'] = 'production-lineup/raw-material-report/consumed-raw-material-90deg/excel';
+      
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.RawMaterial.raw-material-consumed-report', $data);
     

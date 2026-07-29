@@ -1084,6 +1084,7 @@ class ElQC_Controller extends Controller
                     'rwrk_status'   => '0',
                     'elqc_rfid'     => $request->input('rfid'),
                     'elqc_barcode'  => $request->input('barCode'),
+                    'scan_flag' => 1,
                     'created_by'    => $request->session()->get('empId')
                 );
 
@@ -1406,7 +1407,7 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id')
             ->where('elqc.status', '0')
-            ->where('elqc.rwrk_status', '1')
+            // ->where('elqc.rwrk_status', '1')
             ->orderBy('elqc.created_at', 'DESC');
     
         // Apply Dynamic Filters
@@ -1468,7 +1469,7 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id')
             ->where('elqc.status', '0')
-            ->where('elqc.rwrk_status', '1')
+            //->where('elqc.rwrk_status', '1')
             ->orderBy('elqc.created_at', 'DESC');
     
         // Apply Dynamic Filters

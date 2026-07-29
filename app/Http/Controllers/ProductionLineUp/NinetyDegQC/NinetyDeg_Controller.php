@@ -1034,7 +1034,22 @@ class NinetyDeg_Controller extends Controller
                 
             }
 
-            //ELQC Auto Entry
+            //REWORK
+            $exists = DB::table('tbl_factory_el_qc_laravel')
+            ->where('elqc_barcode', request()->input('barCode'))
+            ->where('status', '<>', '1')
+            ->exists();
+            if ($exists == true) {
+                $qry = EL_QC::where('elqc_barcode',$request->input('barCode'));
+                $data = array(
+                    'status'        => '1',
+                    'rwrk_status'   => '1'
+                );
+
+                $res =  $qry->update($data);
+            }
+            
+            //Normal
             $exists = DB::table('tbl_factory_el_qc_laravel')
             ->where('elqc_barcode', request()->input('barCode'))
             ->exists();
@@ -1111,6 +1126,7 @@ class NinetyDeg_Controller extends Controller
                         'ninetydeg_pDefectRsn'  => $request->input('p_reject_reason'),
                         'ninetydeg_rfid'        => $request->input('rfid'),
                         'ninetydeg_barcode'     => $request->input('barCode'),
+                        'scan_flag' => 1,
                         'created_by'            => $request->session()->get('empId')
                     );
     

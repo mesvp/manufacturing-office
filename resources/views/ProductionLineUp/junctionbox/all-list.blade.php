@@ -31,21 +31,24 @@
             <div class="col-md-12">
                 <ul class="nav nav-pills flex-column flex-md-row mb-3 gap-2 gap-lg-0" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" href="javascript:void(0);" role="tab" data-bs-toggle="tab"
-                            data-bs-target="#navs-pendingOp" aria-controls="navs-purchaseorder" aria-selected="true">
-                            <i class="mdi mdi-account-outline mdi-20px me-1"></i>Pending For Junction Box
+                        <a class="nav-link {{ request('tab', 'pending') == 'pending' ? 'active' : '' }}"
+                           data-bs-toggle="tab"
+                           href="#navs-pending">
+                            Pending For JunctionBox
+                        </a>
+                    </li>
+                     <li class="nav-item">
+                        <a class="nav-link {{ request('tab') == 'passed' ? 'active' : '' }}"
+                           data-bs-toggle="tab"
+                           href="#navs-passed">
+                            Passed
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="javascript:void(0);" role="tab" data-bs-toggle="tab"
-                            data-bs-target="#navs-passed" aria-controls="navs-sales-id" aria-selected="false">
-                            <i class="mdi mdi-account-box-outline mdi-20px me-1"></i>Passed
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="javascript:void(0);" role="tab" data-bs-toggle="tab"
-                            data-bs-target="#navs-reject" aria-controls="navs-profit-id" aria-selected="false">
-                            <i class="mdi mdi-cash-multiple mdi-20px me-1"></i>Reject
+                        <a class="nav-link {{ request('tab') == 'reject' ? 'active' : '' }}"
+                           data-bs-toggle="tab"
+                           href="#navs-reject">
+                            Reject
                         </a>
                     </li>
                 </ul>
@@ -59,11 +62,12 @@
                     <!--</div>-->
                     <div class="card-body">
                         <div class="tab-content p-0">
-                            <div class="tab-pane fade active show" id="navs-pendingOp" role="tabpanel">
+                            <div class="tab-pane fade {{ request('tab', 'pending') == 'pending' ? 'show active' : '' }}"
+                                 id="navs-pending">
                                 <div class="">
                                     <table
-                                        class="d-block dataTable no-footer table table-bordered table-responsive text-nowrap w-100"
-                                        id="example">
+                                        class="d-block no-footer table table-bordered table-responsive text-nowrap w-100"
+                                        id="">
                                         <thead class="table-secondary">
                                             <tr>
                                                 <td>SL No</td>
@@ -83,7 +87,7 @@
                                         <tbody>
                                             @foreach ($AllLists as $item)
                                                 <tr>
-                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ ($AllLists->currentPage() - 1) * $AllLists->perPage() + $loop->iteration }}</td>
                                                     <td>{{ \Carbon\Carbon::parse($item->ninetydeg_date)->format('d/m/Y') }}
                                                     </td>
                                                     <td>{{ \Carbon\Carbon::parse($item->ninetydeg_time)->format('h:i A') }}
@@ -95,20 +99,23 @@
                                                     <td>{{ $item->wattage ?? '-' }}</td>
                                                     <td>{{ $item->cellSize ?? '-' }}</td>
                                                     <td>{{ $item->bus_bar ?? '-' }}</td>
-                                                    <td>{{ $item->ninetydeg_operator ?? '-' }}</td>
-                                                    <td>{{ $item->ninetydeg_incharge ?? '-' }}</td>
+                                                    <td>{{ $item->ninetydeg_operator_name ?? '-' }}</td>
+                                                    <td>{{ $item->ninetydeg_incharge_name ?? '-' }}</td>
                                                     
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="mt-4 d-flex justify-content-center">
+                                   {{ $AllLists->appends(['tab' => 'pending'])->links() }}
+                                </div>
                             </div>
-                            <div class="tab-pane fade" id="navs-passed" role="tabpanel">
+                            <div class="tab-pane fade {{ request('tab') == 'passed' ? 'show active' : '' }}" id="navs-passed">
                                 <div class="">
                                     <table
-                                        class="d-block dataTable no-footer table table-bordered table-responsive text-nowrap w-100"
-                                        id="example2">
+                                        class="d-block no-footer table table-bordered table-responsive text-nowrap w-100"
+                                        id="">
                                         <thead class="table-secondary">
                                             <tr>
                                                 <td>SL No</td>
@@ -126,10 +133,10 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($AllLaminatorLists as $item)
-                                                @if ($item->status == '1')
+                                            @foreach ($PassedLists as $item)
+                                                
                                                     <tr>
-                                                        <td>{{ $loop->iteration }}</td>
+                                                        <td>{{ ($PassedLists->currentPage() - 1) * $PassedLists->perPage() + $loop->iteration }}</td>
                                                         <td>{{ \Carbon\Carbon::parse($item->jb_date)->format('d/m/Y') }}
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::parse($item->jb_time)->format('h:i A') }}
@@ -140,25 +147,28 @@
                                                         <td>{{ $item->wattage ?? '-' }}</td>
                                                         <td>{{ $item->bus_bar ?? '-' }}</td>
                                                         <td>{{ ($item->status == 1)?'Passed' : 'Passed With Damage' }}</td>
-                                                        <td>{{ $item->jb_operator ?? '-' }}</td>
-                                                        <td>{{ $item->jb_incharge ?? '-' }}</td>
+                                                        <td>{{ $item->jb_operator_name ?? '-' }}</td>
+                                                        <td>{{ $item->jb_incharge_name ?? '-' }}</td>
                                                         <td>
                                                             <a class="btn btn-primary btn-xs text-capitalize waves-effect waves-light"
                                                                 href="{{ route('jb-view', ['id' => $item->jb_id]) }}?page=VIEW" role="button"><i class="mdi mdi-eye"></i>
                                                                 View</a>
                                                         </td>
                                                     </tr>
-                                                @endif
+                                                
                                             @endforeach
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="mt-4 d-flex justify-content-center">
+                                    {{ $PassedLists->appends(['tab' => 'passed'])->links() }}
+                                </div>
                             </div>
-                            <div class="tab-pane fade" id="navs-reject" role="tabpanel">
+                            <div class="tab-pane fade {{ request('tab') == 'reject' ? 'show active' : '' }}" id="navs-reject">
                                 <div class="">
                                     <table
-                                        class="d-block dataTable no-footer table table-bordered table-responsive text-nowrap w-100"
-                                        id="example3">
+                                        class="d-block no-footer table table-bordered table-responsive text-nowrap w-100"
+                                        id="">
                                         <thead class="table-secondary">
                                             <tr>
                                                 <td>SL No</td>
@@ -175,10 +185,10 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($AllLaminatorLists as $item)
-                                                @if ($item->status == '2' || $item->status == '0')
+                                            @foreach ($RejectLists as $item)
+                                                
                                                     <tr>
-                                                        <td>{{ $loop->iteration }}</td>
+                                                        <td>{{ ($RejectLists->currentPage() - 1) * $RejectLists->perPage() + $loop->iteration }}</td>
                                                         <td>{{ \Carbon\Carbon::parse($item->jb_date)->format('d/m/Y') }}
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::parse($item->jb_time)->format('h:i A') }}
@@ -188,18 +198,21 @@
                                                         <td>{{ $item->jb_source ?? '-' }}</td>
                                                         <td>{{ $item->wattage ?? '-' }}</td>
                                                         <td>{{ $item->bus_bar ?? '-' }}</td>
-                                                        <td>{{ $item->jb_operator ?? '-' }}</td>
-                                                        <td>{{ $item->jb_incharge ?? '-' }}</td>
+                                                        <td>{{ $item->jb_operator_name ?? '-' }}</td>
+                                                        <td>{{ $item->jb_incharge_name ?? '-' }}</td>
                                                         <td>
                                                             <a class="btn btn-primary btn-xs text-capitalize waves-effect waves-light"
                                                                 href="{{ route('jb-view', ['id' => $item->jb_id]) }}?page=VIEW" role="button"><i class="mdi mdi-eye"></i>
                                                                 View</a>
                                                         </td>
                                                     </tr>
-                                                @endif
+                                                
                                             @endforeach
                                         </tbody>
                                     </table>
+                                </div>
+                                <div class="mt-4 d-flex justify-content-center">
+                                    {{ $RejectLists->appends(['tab' => 'reject'])->links() }}
                                 </div>
                             </div>
                         </div>

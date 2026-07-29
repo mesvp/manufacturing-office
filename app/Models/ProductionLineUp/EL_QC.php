@@ -24,6 +24,7 @@ class EL_QC extends Model
         'elqc_barcode',
         'status',
         'rwrk_status',
-        'created_by'
+        'created_by',
+        'scan_flag'
     ];
 }

@@ -52,6 +52,8 @@ class JB_Controller extends Controller
       $data['pageTitle'] = 'Pending Raw Material at Junction Box Stage List Details';
       $data['reportTitle'] = 'Pending Raw Material at Junction Box Stage';
       $data['detailsLink'] = 'production-lineup/raw-material-report/pending-raw-material-jb/view-details';
+      $data['excelLink'] = 'production-lineup/raw-material-report/pending-raw-material-jb/excel';
+        
         
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.RawMaterial.raw-material-pending-report', $data);
@@ -126,6 +128,7 @@ class JB_Controller extends Controller
       $data['pageTitle'] = 'Consumed Raw Material at Junction Box Stage List Details';
       $data['reportTitle'] = 'Consumed Raw Material at Junction Box Stage';
       $data['detailsLink'] = 'production-lineup/raw-material-report/consumed-raw-material-jb/view-details';
+      $data['excelLink'] = 'production-lineup/raw-material-report/consumed-raw-material-jb/excel';
         
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.RawMaterial.raw-material-consumed-report', $data);

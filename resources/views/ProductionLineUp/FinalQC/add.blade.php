@@ -313,7 +313,13 @@
                                                 <option value="0">Damage</option>
                                             </select>
                                         </td>
-                                        <td class="py-1"></td>
+                                        <td class="py-1" id="grade-container">
+                                            <select class="form-select w-px-150" name="el_grade" id="el_grade" required>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="C">C</option>
+                                            </select>
+                                        </td>
                                         <td>
                                             {{-- <button class="btn btn-outline-primary waves-effect" data-bs-toggle="modal" data-bs-target="#Defectmodal">Defect</button> --}}
                                         </td>
@@ -479,6 +485,38 @@
 @section('pageScript')
     <script>
         $(document).ready(function() {
+
+
+            function toggleGradeField() {
+                    var elType = $('#el_type').val();
+                    
+                    if (elType == '1') { // Assuming '1' means Passed
+                        // Show container and make it required
+                        $('#grade-container').show();
+                        $('#el_grade').prop('required', true);
+                        
+                        // If it was cleared out previously, reset it to the first option
+                        if (!$('#el_grade').val()) {
+                            $('#el_grade').prop('selectedIndex', 0);
+                        }
+                    } else {
+                        // Hide container, remove required, and clear value
+                        $('#grade-container').hide();
+                        $('#el_grade').prop('required', false).val('');
+                    }
+                }
+
+                // Run on initial page load
+                toggleGradeField();
+
+                // Run whenever el_type changes
+                $('#el_type').on('change', function() {
+                    toggleGradeField();
+                });
+
+
+
+
                 // When Scan button is clicked, temporarily enable input for scanning
                 $(document).on('click', '#barcodeteble .scn', function() {
                     const barcodeInput = $('#barcodeInput2');

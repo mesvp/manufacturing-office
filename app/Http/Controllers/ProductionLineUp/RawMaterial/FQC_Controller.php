@@ -53,6 +53,9 @@ class FQC_Controller extends Controller
       $data['pageTitle'] = 'Pending Raw Material at Final QC Stage List Details';
       $data['reportTitle'] = 'Pending Raw Material at Final QC Stage';
       $data['detailsLink'] = 'production-lineup/raw-material-report/pending-raw-material-fqc/view-details';
+      
+      $data['excelLink'] = 'production-lineup/raw-material-report/pending-raw-material-fqc/excel';
+        
         
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.RawMaterial.raw-material-pending-report', $data);
@@ -127,6 +130,9 @@ class FQC_Controller extends Controller
       $data['reportTitle'] = 'Consumed Raw Material at Final QC Stage';
       
       $data['detailsLink'] = 'production-lineup/raw-material-report/consumed-raw-material-fqc/view-details';
+      
+      $data['excelLink'] = 'production-lineup/raw-material-report/consumed-raw-material-fqc/excel';
+        
 
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.RawMaterial.raw-material-consumed-report', $data);

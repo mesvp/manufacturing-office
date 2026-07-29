@@ -28,6 +28,7 @@ class NinetyDeg_Model extends Model
         'status',
         'rwrk_status',
         'ninetydeg_pDefectRsn',
-        'created_by'
+        'created_by',
+        'scan_flag'
     ];
 }

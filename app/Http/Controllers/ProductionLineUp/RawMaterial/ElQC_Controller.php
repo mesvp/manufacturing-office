@@ -62,6 +62,8 @@ class ElQC_Controller extends Controller
       $data['reportTitle'] = 'Pending Raw Material at ELQC Stage';
       
       $data['detailsLink'] = 'production-lineup/raw-material-report/pending-raw-material-elqc/view-details';
+      
+      $data['excelLink'] = 'production-lineup/raw-material-report/pending-raw-material-elqc/excel';
         
         
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
@@ -145,6 +147,7 @@ class ElQC_Controller extends Controller
       $data['pageTitle'] = 'Consumed Raw Material at ELQC Stage List Details';
       $data['reportTitle'] = 'Consumed Raw Material at ELQC Stage';
       $data['detailsLink'] = 'production-lineup/raw-material-report/consumed-raw-material-elqc/view-details';
+      $data['excelLink'] = 'production-lineup/raw-material-report/consumed-raw-material-elqc/excel';
         
       $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
       return view('ProductionLineUp.RawMaterial.raw-material-consumed-report', $data);

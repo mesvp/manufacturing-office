@@ -13,6 +13,7 @@ use App\Models\ProductionLineUp\BushingMaterial_Model;
 use App\Models\ProductionLineUp\BushingDamageMaterial_Model;
 use Session;
 use PDF;
+use Carbon\Carbon;
 
 class BushingSetup_Controller extends Controller
 {
@@ -165,9 +166,11 @@ class BushingSetup_Controller extends Controller
 
     // 3. Order the results and paginate (e.g., 15 items per page)
     // withQueryString() ensures your filters stay in the URL when clicking page numbers
+    $perPage = $request->input('per_page', 10);
+    $data['perPage'] = $perPage;
     $data['AllLists'] = $query->orderBy('bol.created_at', 'desc')
                             ->groupBy('bol.bushing_barCode')
-                              ->paginate(15);
+                              ->paginate($perPage);
 
     // dd($data['AllLists']);
 
@@ -245,9 +248,11 @@ class BushingSetup_Controller extends Controller
 
     // 3. Order the results and paginate (e.g., 15 items per page)
     // withQueryString() ensures your filters stay in the URL when clicking page numbers
+    $perPage = $request->input('per_page', 10);
+    $data['perPage'] = $perPage;
     $data['AllLists'] = $query->orderBy('bol.created_at', 'desc')
                             ->groupBy('bol.bushing_barCode')
-                              ->paginate(15);
+                              ->paginate($perPage);
 
     // dd($data['AllLists']);
 
@@ -653,7 +658,7 @@ class BushingSetup_Controller extends Controller
   }
   
   
-  public function bushing_details()
+  public function bushing_details(Request $request)
   {
     $data['menu'] = 'bushing-details';
     
@@ -720,46 +725,64 @@ class BushingSetup_Controller extends Controller
     $_GET['toDate'] = $toDate;
 
     // Paginate main list (Only 15 items processed)
-    $paginatedLists = $query->paginate(15);
-    $data['AllLists'] = $paginatedLists;
+    $perPage = $request->input('per_page', 10);
+        $data['AllLists'] = $query->paginate($perPage);
+        $data['perPage'] = $perPage;
+    $paginatedLists = $query->paginate($perPage);
 
     $data['Allmats'] = DB::table('tbl_factory_material_master_laravel')
         ->select('id', 'title as mname')
         ->get();
 
     // 4. PERFORMANCE FIX: Only fetch material lists for the current page batches
-    $currentPageBatchNos = $paginatedLists->pluck('bushing_batchNo')->unique()->toArray();
+     $currentPageBatchNos = $paginatedLists->pluck('bushing_batchNo')
+    ->unique()
+    ->filter()
+    ->values()
+    ->toArray();
 
     if (!empty($currentPageBatchNos)) {
-        $data['AllMatLists'] = DB::table('tbl_factory_bushing_material_laravel as bml')
-            ->select(
-                'bml.bushingId',
-                'mml.id as matId',
-                'mml.title as mname',
-                'psml.size',
-                'psml.brand',
-                'psml.qty',
-                'bol.bushing_batchNo'
-            )
-            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_id', '=', 'bml.bushingId')
-            ->join('tbl_factory_material_master_laravel as mml', 'mml.id', '=', 'bml.prd_matId')
-            ->leftJoin('tbl_factory_production_setup_material_laravel as psml', function ($join) {
-                $join->on('psml.material', '=', 'bml.prd_matId')
-                     ->on('psml.batchNo', '=', 'bol.bushing_batchNo');
-            })
-            ->whereIn('bol.bushing_batchNo', $currentPageBatchNos) // Crucial filtering step
-            ->get()
-            ->groupBy('bushing_batchNo');
+        // 1. Generate the correct number of placeholder question marks: "?, ?, ?"
+        $placeholders = implode(',', $currentPageBatchNos);
+    
+        $sql = "SELECT 
+                    `bml`.`bushingId`, 
+                    `mml`.`id` AS `matId`, 
+                    `mml`.`title` AS `mname`, 
+                    `psml`.`size`, 
+                    `psml`.`brand`, 
+                    `psml`.`qty`, 
+                    `bol`.`bushing_batchNo`
+                FROM `tbl_factory_bushing_material_laravel` AS `bml`
+                INNER JOIN `tbl_factory_bushing_laravel` AS `bol` 
+                    ON `bol`.`bushing_id` = `bml`.`bushingId`
+                INNER JOIN `tbl_factory_material_master_laravel` AS `mml` 
+                    ON `mml`.`id` = `bml`.`prd_matId`
+                LEFT JOIN `tbl_factory_production_setup_material_laravel` AS `psml` 
+                    ON `psml`.`material` = `bml`.`prd_matId` 
+                    AND `psml`.`batchNo` = `bol`.`bushing_batchNo`
+                WHERE `bol`.`bushing_batchNo` IN ($placeholders)
+                GROUP BY `bol`.`bushing_batchNo`"; 
+    
+        // 2. Safely execute the raw query passing the actual clean array to PDO bindings
+        $rawResults = DB::select($sql);
+    
+        // 3. Convert the plain stdClass array results into a collection and group them 
+        // to match your blade template logic perfectly
+        $data['AllMatLists'] = collect($rawResults)->groupBy('bushing_batchNo');
+    
     } else {
         $data['AllMatLists'] = collect([]);
     }
-
+    // echo '<pre>';
+    // print_r($data);exit;
+    
     $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
     
     return view('ProductionLineUp.BushingSetup.bushing-details', $data);
   }
 
-  
+
 
   public function bushing_damage_report()
   {
@@ -881,7 +904,9 @@ class BushingSetup_Controller extends Controller
         'bushing_hasDamage' => request()->input('hasDamage'),
         'bushing_rfid' => request()->input('rfid'),
         'bushing_barCode' => request()->input('barCode'),
+        'scan_flag' => 1,
         'created_by' => request()->session()->get('empId')
+        
       );
 
       $res = Bushing_Model::create($data);

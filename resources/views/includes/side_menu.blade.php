@@ -112,7 +112,6 @@ foreach($PermittedMenuList as $menuList){
                     </ul>
                 </li>
                 <?php endif; ?>
-
                 
                 <?php if(count(array_intersect($menuSubArr2, $menu_fetch))): ?>
                 <li class="menu-item {{ in_array($menu, $menuSubArr2) ? 'active open' : '' }}">
@@ -601,11 +600,34 @@ foreach($PermittedMenuList as $menuList){
         </li>
         
         
+        
+        
+         @php
+            $menuArr3 = ['barcode-scan-report'];
+        @endphp
+
+        <?php if(count(array_intersect($menuArr3, $menu_fetch))): ?>
+        <li class="menu-item {{ in_array($menu, $menuArr3) ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle waves-effect">
+                <i class="menu-icon tf-icons mdi mdi-office-building"></i>
+                <div data-i18n="Reports">Reports</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ $menu == 'barcode-scan-report' ? 'active' : '' }}">
+                    <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/report/barcode-scan-report') }}" class="menu-link">
+                        <div data-i18n="Barcode San Report"> Barcode San Report</div>
+                    </a>
+                </li>
+                
+            </ul>
+        </li>
+        <?php endif; ?>
+        
 
         {{-- master menus start --}}
         
         @php
-            $menuArr3 = ['material', 'uoms', 'pallete', 'plant-capacity', 'plant-target', 'shift-timing'];
+            $menuArr3 = ['material', 'uoms', 'pallete'];
         @endphp
 
         <?php if(in_array('material',$menu_fetch)): ?>
@@ -623,21 +645,6 @@ foreach($PermittedMenuList as $menuList){
                 <li class="menu-item {{ $menu == 'pallete' ? 'active' : '' }}">
                     <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/pallete') }}" class="menu-link">
                         <div data-i18n="Pallete"> Pallete</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ $menu == 'plant-capacity' ? 'active' : '' }}">
-                    <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/master/plant_capacity') }}" class="menu-link">
-                        <div data-i18n="Plant Capacity"> Plant Capacity</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ $menu == 'plant-target' ? 'active' : '' }}">
-                    <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/master/plant_target') }}" class="menu-link">
-                        <div data-i18n="Plant Target"> Plant Target</div>
-                    </a>
-                </li>
-                <li class="menu-item {{ $menu == 'shift-timing' ? 'active' : '' }}">
-                    <a onclick="localStorage.removeItem('activeTab');" href="{{ URL('production-lineup/master/shift_timing') }}" class="menu-link">
-                        <div data-i18n="Shift Timing"> Shift Timing</div>
                     </a>
                 </li>
                 {{-- <li class="menu-item {{ $menu == 'uoms' ? 'active' : '' }}">

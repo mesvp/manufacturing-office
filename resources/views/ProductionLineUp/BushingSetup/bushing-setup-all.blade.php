@@ -131,6 +131,21 @@
                                 </div>
                             </div>
                         </form>
+                        
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <label for="per_page">Show </label>
+                                <select id="per_page" onchange="changePerPage(this.value)" class="form-select d-inline-block w-auto">
+                                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
+                                    <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20</option>
+                                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
+                                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
+                                    <option value="200" {{ $perPage == 200 ? 'selected' : '' }}>200</option>
+                                </select>
+                                <label> records</label>
+                            </div>
+                        </div>
                         <table class="d-block dataTable no-footer table table-bordered table-responsive text-nowrap w-100"
                             id="">
                             <thead class="table table-secondary">
@@ -184,4 +199,18 @@
             </div>
         </div>
     </div>
+
+<script>
+function changePerPage(value) {
+    // Get current URL details
+    let url = new URL(window.location.href);
+    
+    // Set the new per_page value and reset page back to 1
+    url.searchParams.set('per_page', value);
+    url.searchParams.set('page', 1); 
+    
+    // Redirect to the updated URL
+    window.location.href = url.href;
+}
+</script>
 @endsection

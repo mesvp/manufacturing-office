@@ -209,12 +209,14 @@ Route::group(['prefix' => 'production-lineup',  'middleware' => 'auth:admin'], f
     Route::any('junctionbox/passed', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'passed']);
     Route::any('junctionbox/rejected', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'rejected']);
     
+    Route::any('junctionbox-all', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'indexAll']);
+    Route::any('junctionbox/passed-all', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'passedAll']);
+    Route::any('junctionbox/rejected-all', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'rejectedAll']);
+    
     Route::any('junctionbox/pending-excel', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'pendingExcel']);
     Route::any('junctionbox/passed-excel', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'passedExcel']);
     Route::any('junctionbox/rejected-excel', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'rejectedExcel']);
     
-    
-    Route::any('junctionbox-all', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'indexAll']);
     
     
     Route::any('junctionbox/add', [App\Http\Controllers\ProductionLineUp\JunctionBox\JunctionBox_Controller::class, 'addJunctionBox'])->name('add-junctionbox');
@@ -233,9 +235,12 @@ Route::group(['prefix' => 'production-lineup',  'middleware' => 'auth:admin'], f
     Route::any('final-qc-excel', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'pendingExcel']);
     Route::any('final-qc-passed-excel', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'passedExcel']);
     Route::any('final-qc-rejected-excel', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'rejectedExcel']);
-	
-    Route::any('final-qc-all', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'indexAll']);
+        
     
+    Route::any('final-qc-all', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'indexAll']);
+    Route::any('final-qc/passed-all', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'passedListAll']);
+    Route::any('final-qc/rejected-all', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'rejectedListAll']);
+        
     
     Route::any('final-qc/add', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'add'])->name('add-fqc');
     Route::get('final-qc/getBushingMaterial', [App\Http\Controllers\ProductionLineUp\FinalQC\FinalQC_Controller::class, 'getBushingMaterial']);
@@ -254,41 +259,39 @@ Route::group(['prefix' => 'production-lineup',  'middleware' => 'auth:admin'], f
   
   //RAW Material Report
   Route::any('raw-material-report/pending-raw-material-elqc', [App\Http\Controllers\ProductionLineUp\RawMaterial\ElQC_Controller::class, 'availRawMat']);
+  Route::any('raw-material-report/pending-raw-material-elqc/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\ElQC_Controller::class, 'availRawMatExcel']);
   Route::any('raw-material-report/pending-raw-material-elqc/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\ElQC_Controller::class, 'availRawMatDtls']);
   Route::any('raw-material-report/consumed-raw-material-elqc', [App\Http\Controllers\ProductionLineUp\RawMaterial\ElQC_Controller::class, 'consumeRawMat']);
+  Route::any('raw-material-report/consumed-raw-material-elqc/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\ElQC_Controller::class, 'consumeRawMatExcel']);
   Route::any('raw-material-report/consumed-raw-material-elqc/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\ElQC_Controller::class, 'consumeRawMatDtls']);
   
   Route::any('raw-material-report/pending-raw-material-90deg', [App\Http\Controllers\ProductionLineUp\RawMaterial\Ninetydeg_Controller::class, 'availRawMat']);
+  Route::any('raw-material-report/pending-raw-material-90deg/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\Ninetydeg_Controller::class, 'availRawMatExcel']);
   Route::any('raw-material-report/pending-raw-material-90deg/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\Ninetydeg_Controller::class, 'availRawMatDtls']);
   Route::any('raw-material-report/consumed-raw-material-90deg', [App\Http\Controllers\ProductionLineUp\RawMaterial\Ninetydeg_Controller::class, 'consumeRawMat']);
+  Route::any('raw-material-report/consumed-raw-material-90deg/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\Ninetydeg_Controller::class, 'consumeRawMatExcel']);
   Route::any('raw-material-report/consumed-raw-material-90deg/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\Ninetydeg_Controller::class, 'consumeRawMatDtls']);
   
   Route::any('raw-material-report/pending-raw-material-jb', [App\Http\Controllers\ProductionLineUp\RawMaterial\JB_Controller::class, 'availRawMat']);
+  Route::any('raw-material-report/pending-raw-material-jb/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\JB_Controller::class, 'availRawMatExcel']);
   Route::any('raw-material-report/pending-raw-material-jb/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\JB_Controller::class, 'availRawMatDtls']);
   Route::any('raw-material-report/consumed-raw-material-jb', [App\Http\Controllers\ProductionLineUp\RawMaterial\JB_Controller::class, 'consumeRawMat']);
+  Route::any('raw-material-report/consumed-raw-material-jb/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\JB_Controller::class, 'consumeRawMatExcel']);
   Route::any('raw-material-report/consumed-raw-material-jb/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\JB_Controller::class, 'consumeRawMatDtls']);
   
   Route::any('raw-material-report/pending-raw-material-fqc', [App\Http\Controllers\ProductionLineUp\RawMaterial\FQC_Controller::class, 'availRawMat']);
+  Route::any('raw-material-report/pending-raw-material-fqc/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\FQC_Controller::class, 'availRawMatExcel']);
   Route::any('raw-material-report/pending-raw-material-fqc/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\FQC_Controller::class, 'availRawMatDtls']);
   Route::any('raw-material-report/consumed-raw-material-fqc', [App\Http\Controllers\ProductionLineUp\RawMaterial\FQC_Controller::class, 'consumeRawMat']);
+  Route::any('raw-material-report/consumed-raw-material-fqc/excel', [App\Http\Controllers\ProductionLineUp\RawMaterial\FQC_Controller::class, 'consumeRawMatExcel']);
   Route::any('raw-material-report/consumed-raw-material-fqc/view-details', [App\Http\Controllers\ProductionLineUp\RawMaterial\FQC_Controller::class, 'consumeRawMatDtls']);
   
-
-  //Master-> Plant Capacity
-  Route::any('master/plant_capacity', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'index']);
-	Route::post('master/plant_capacity/insert', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'insert']);
-	Route::post('master/plant_capacity/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\PlantCapacity_Master::class, 'approvalAction']);
-   
-  //Master-> Plant Target
-  Route::any('master/plant_target', [App\Http\Controllers\ProductionLineUp\Master\PlantTarget_Master::class, 'index']);
-	Route::post('master/plant_target/insert', [App\Http\Controllers\ProductionLineUp\Master\PlantTarget_Master::class, 'insert']);
-	Route::post('master/plant_target/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\PlantTarget_Master::class, 'approvalAction']);
-   
-  //Master-> Shift Timing
-  Route::any('master/shift_timing', [App\Http\Controllers\ProductionLineUp\Master\ShiftTiming_Master::class, 'index']);
-	Route::post('master/shift_timing/insert', [App\Http\Controllers\ProductionLineUp\Master\ShiftTiming_Master::class, 'insert']);
-	Route::post('master/shift_timing/approvalAction', [App\Http\Controllers\ProductionLineUp\Master\ShiftTiming_Master::class, 'approvalAction']);
-   
+  
+  
+  
+  Route::get('report/barcode-scan-report', [App\Http\Controllers\ProductionLineUp\Report\BarcodeScanReportController::class, 'index']);
+  Route::get('report/barcode-scan-report-download', [App\Http\Controllers\ProductionLineUp\Report\BarcodeScanReportController::class, 'excelDownload']);
+  
 });
 
 

@@ -22,6 +22,7 @@ class Bushing_Model extends Model
       'bushing_hasDamage',
       'bushing_rfid',
       'bushing_barCode',
-      'created_by'
+      'created_by',
+      'scan_flag'
     ];
 }

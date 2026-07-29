@@ -27,6 +27,7 @@ class JB_Model extends Model
         'jb_barcode',
         'status',
         'jb_pDefectRsn',
-        'created_by'
+        'created_by',
+        'scan_flag'
     ];
 }

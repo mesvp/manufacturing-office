@@ -750,31 +750,63 @@ class GatePassController extends Controller
                 $slnoDetails = empty($slnoDetails) ? [] : [$slnoDetails];
             }
 
+            // if (!empty($slnoDetails)) {
+            //     foreach ($slnoDetails as $slnoString) {
+            //         foreach (explode(',', $slnoString) as $item) {
+            //             if (trim($item) === '') continue;
+
+            //             [$matId, $slnoDtls] = explode(':', $item, 2);
+
+            //             if (!isset($materialMap[$matId])) continue;
+
+            //             $mat = $materialMap[$matId];
+
+            //             $slno = new GatepassSlno();
+            //             $slno->type = 'OUT';
+            //             $slno->gp_reqNo  = $material->request_no;
+            //             $slno->gp_invNo  = $mat['invNo'] ?? '';
+            //             $slno->matId     = $matId;
+            //             $slno->custName  = $mat['custName'] ?? '';
+            //             $slno->matName   = $mat['matName'] ?? '';
+            //             $slno->invUom    = $mat['invUom'] ?? '';
+            //             $slno->dispQty   = $mat['dispQty'] ?? '';
+            //             $slno->slno_dtls = trim($slnoDtls);
+            //             $slno->save();
+            //         }
+            //     }
+            // }
             if (!empty($slnoDetails)) {
-                foreach ($slnoDetails as $slnoString) {
-                    foreach (explode(',', $slnoString) as $item) {
-                        if (trim($item) === '') continue;
+            foreach ($slnoDetails as $slnoString) {
+                foreach (explode(',', $slnoString) as $item) {
+                    if (trim($item) === '') continue;
 
-                        [$matId, $slnoDtls] = explode(':', $item, 2);
+                    // FIX: Guard against missing colon separator
+                    $parts = explode(':', $item, 2);
+                    if (count($parts) < 2) continue;
 
-                        if (!isset($materialMap[$matId])) continue;
+                    [$matId, $slnoDtls] = $parts;
 
-                        $mat = $materialMap[$matId];
+                    $matId    = trim($matId);
+                    $slnoDtls = trim($slnoDtls);
 
-                        $slno = new GatepassSlno();
-                        $slno->type = 'OUT';
-                        $slno->gp_reqNo  = $material->request_no;
-                        $slno->gp_invNo  = $mat['invNo'] ?? '';
-                        $slno->matId     = $matId;
-                        $slno->custName  = $mat['custName'] ?? '';
-                        $slno->matName   = $mat['matName'] ?? '';
-                        $slno->invUom    = $mat['invUom'] ?? '';
-                        $slno->dispQty   = $mat['dispQty'] ?? '';
-                        $slno->slno_dtls = trim($slnoDtls);
-                        $slno->save();
-                    }
+                    if ($matId === '' || !isset($materialMap[$matId])) continue;
+
+                    $mat = $materialMap[$matId];
+
+                    $slno = new GatepassSlno();
+                    $slno->type      = 'OUT';
+                    $slno->gp_reqNo  = $material->request_no;
+                    $slno->gp_invNo  = $mat['invNo'] ?? '';
+                    $slno->matId     = $matId;
+                    $slno->custName  = $mat['custName'] ?? '';
+                    $slno->matName   = $mat['matName'] ?? '';
+                    $slno->invUom    = $mat['invUom'] ?? '';
+                    $slno->dispQty   = $mat['dispQty'] ?? '';
+                    $slno->slno_dtls = $slnoDtls;
+                    $slno->save();
                 }
             }
+        }
         } else {
             // IN Gatepass
             $matIds = $request->input('matid', []);
