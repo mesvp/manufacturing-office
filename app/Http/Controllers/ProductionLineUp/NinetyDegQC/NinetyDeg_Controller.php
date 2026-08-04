@@ -8,20 +8,21 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ProductionLineUp\{NinetyDeg_Model, NinetyDeg_Model_RWRK, NinetyDegDamage_Model, NinetyDegDamage_Model_RWRK, NinetyDegHist_Model};
 use App\Models\ProductionLineUp\{EL_QC, EL_QC_Defect, EL_QC_RWRK, EL_QC_Defect_RWRK, EL_QC_History};
 use App\Models\ProductionLineUp\{Bushing_Model, BushingMaterial_Model, BushingDamageMaterial_Model};
-use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model};
+use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model, Raw_Consumption_Transac_Model};
 
 class NinetyDeg_Controller extends Controller
 {
-    public  static function PermittedMenuList($sessionId){
-      //Menu Permission
-      $res = DB::table('prod_menu_laravel')
-      ->leftJoin('prod_menu_acc_laravel', 'prod_menu_laravel.id', '=', 'prod_menu_acc_laravel.menu_id')
-      ->where('prod_menu_acc_laravel.emp_id', '=', $sessionId)
-      ->where('prod_menu_acc_laravel.accessType', '=', 'yes')
-      ->select('prod_menu_laravel.*', 'prod_menu_acc_laravel.accessType')
-      ->get();
-      
-      return $res;
+    public  static function PermittedMenuList($sessionId)
+    {
+        //Menu Permission
+        $res = DB::table('prod_menu_laravel')
+            ->leftJoin('prod_menu_acc_laravel', 'prod_menu_laravel.id', '=', 'prod_menu_acc_laravel.menu_id')
+            ->where('prod_menu_acc_laravel.emp_id', '=', $sessionId)
+            ->where('prod_menu_acc_laravel.accessType', '=', 'yes')
+            ->select('prod_menu_laravel.*', 'prod_menu_acc_laravel.accessType')
+            ->get();
+
+        return $res;
     }
     //
     public function getUserIP()
@@ -45,44 +46,44 @@ class NinetyDeg_Controller extends Controller
 
         return $ip;
     }
-    
+
     public function index(Request $request)
     {
         $data['menu'] = '90deg-qc';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
-        
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
+
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
-          ->select([
-              'elqc.*',
-              'ninetydeg.ninetydeg_id',
-              'ninetydeg.status as sts',
-              'ninetydeg.rwrk_status as rwsts',
-              'ninetydeg.ninetydeg_source',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as elqc_operator',
-              'b.fullname as elqc_incharge',
-              'c.fullname as createdBy'
-          ])
-          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
-          ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
+            ->select([
+                'elqc.*',
+                'ninetydeg.ninetydeg_id',
+                'ninetydeg.status as sts',
+                'ninetydeg.rwrk_status as rwsts',
+                'ninetydeg.ninetydeg_source',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as elqc_operator',
+                'b.fullname as elqc_incharge',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
+            ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
 
         // 2. Apply the complex mandatory condition
         $query->where(function ($q) {
@@ -124,190 +125,190 @@ class NinetyDeg_Controller extends Controller
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.index', $data);
     }
-    
+
     public function passedList(Request $request)
     {
         $data['menu'] = '90deg-qc';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
-        
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
+
         // 1. Initialize the query builder
-              $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
-          ->select([
-              'ninetydeg.*',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as ninetydeg_operator-name',
-              'b.fullname as ninetydeg_incharge-name',
-              'c.fullname as createdBy',
-          ])
-          // Subquery for cell damage count
-          ->selectSub(function ($query) {
-              $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
-                  ->selectRaw('SUM(cell_qty)')
-                  ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
-          }, 'no_of_cell_damage')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
-          ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
+        $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
+            ->select([
+                'ninetydeg.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as ninetydeg_operator-name',
+                'b.fullname as ninetydeg_incharge-name',
+                'c.fullname as createdBy',
+            ])
+            // Subquery for cell damage count
+            ->selectSub(function ($query) {
+                $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
+                    ->selectRaw('SUM(cell_qty)')
+                    ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
+            }, 'no_of_cell_damage')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
+            ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
 
-      // 2. Add Conditional Filters (Laravel handles the sanitization)
-      if ($request->filled('createdBy')) {
-          $query->where('ninetydeg.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('ninetydeg.ninetydeg_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('ninetydeg.ninetydeg_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
-      }
-      if ($request->filled('toDate')) {
-          $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
-      }
-      if ($request->filled('batchNo')) {
-          $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
-      }
-      
-      $query->where('ninetydeg.status', 1);
+        // 2. Add Conditional Filters (Laravel handles the sanitization)
+        if ($request->filled('createdBy')) {
+            $query->where('ninetydeg.created_by', $request->createdBy);
+        }
+        if ($request->filled('operator')) {
+            $query->where('ninetydeg.ninetydeg_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('ninetydeg.ninetydeg_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
+        }
+        if ($request->filled('toDate')) {
+            $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
+        }
 
-      // 3. Finalize with Grouping, Ordering, and Pagination
-      $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
-                                        ->orderBy('ninetydeg.created_at', 'DESC')
-                                        ->paginate(10);
+        $query->where('ninetydeg.status', 1);
+
+        // 3. Finalize with Grouping, Ordering, and Pagination
+        $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
+            ->orderBy('ninetydeg.created_at', 'DESC')
+            ->paginate(10);
 
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.passed', $data);
     }
-    
+
     public function rejectedList(Request $request)
     {
         $data['menu'] = '90deg-qc';
-        
-       $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+
+        $data['ShiftMaster'] = DB::table('hr_mstr_shift')
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-       // 1. Start the query builder
-      $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
-          ->select([
-              'ninetydeg.*',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as ninetydeg_operator-name',
-              'b.fullname as ninetydeg_incharge-name',
-              'c.fullname as createdBy',
-          ])
-          // Subquery for cell damage count
-          ->selectSub(function ($query) {
-              $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
-                  ->selectRaw('SUM(cell_qty)')
-                  ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
-          }, 'no_of_cell_damage')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
-          ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
+        // 1. Start the query builder
+        $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
+            ->select([
+                'ninetydeg.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as ninetydeg_operator-name',
+                'b.fullname as ninetydeg_incharge-name',
+                'c.fullname as createdBy',
+            ])
+            // Subquery for cell damage count
+            ->selectSub(function ($query) {
+                $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
+                    ->selectRaw('SUM(cell_qty)')
+                    ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
+            }, 'no_of_cell_damage')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
+            ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
 
-      // 2. Add Conditional Filters (Laravel handles the sanitization)
-      if ($request->filled('createdBy')) {
-          $query->where('ninetydeg.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('ninetydeg.ninetydeg_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('ninetydeg.ninetydeg_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
-      }
-      if ($request->filled('toDate')) {
-          $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
-      }
-      if ($request->filled('batchNo')) {
-          $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
-      }
-      
-      $query->where('ninetydeg.status', 2);
-      // 3. Finalize with Grouping, Ordering, and Pagination
-      $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
-                                        ->orderBy('ninetydeg.created_at', 'DESC')
-                                        ->paginate(10);
+        // 2. Add Conditional Filters (Laravel handles the sanitization)
+        if ($request->filled('createdBy')) {
+            $query->where('ninetydeg.created_by', $request->createdBy);
+        }
+        if ($request->filled('operator')) {
+            $query->where('ninetydeg.ninetydeg_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('ninetydeg.ninetydeg_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
+        }
+        if ($request->filled('toDate')) {
+            $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
+        }
+
+        $query->where('ninetydeg.status', 2);
+        // 3. Finalize with Grouping, Ordering, and Pagination
+        $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
+            ->orderBy('ninetydeg.created_at', 'DESC')
+            ->paginate(10);
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.rejected', $data);
     }
-    
+
     public function indexAll(Request $request)
     {
         $data['menu'] = '90deg-qc-all';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
-        
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
+
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
-          ->select([
-              'elqc.*',
-              'ninetydeg.ninetydeg_id',
-              'ninetydeg.status as sts',
-              'ninetydeg.rwrk_status as rwsts',
-              'ninetydeg.ninetydeg_source',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as elqc_operator',
-              'b.fullname as elqc_incharge',
-              'c.fullname as createdBy'
-          ])
-          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
-          ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
+            ->select([
+                'elqc.*',
+                'ninetydeg.ninetydeg_id',
+                'ninetydeg.status as sts',
+                'ninetydeg.rwrk_status as rwsts',
+                'ninetydeg.ninetydeg_source',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as elqc_operator',
+                'b.fullname as elqc_incharge',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
+            ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
 
         // 2. Apply the complex mandatory condition
         $query->where(function ($q) {
@@ -349,178 +350,178 @@ class NinetyDeg_Controller extends Controller
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.index-all', $data);
     }
-    
+
     public function passedListAll(Request $request)
     {
         $data['menu'] = '90deg-qc-all';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
-        
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
+
         // 1. Initialize the query builder
         $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
-          ->select([
-              'ninetydeg.*',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as ninetydeg_operator-name',
-              'b.fullname as ninetydeg_incharge-name',
-              'c.fullname as createdBy',
-          ])
-          // Subquery for cell damage count
-          ->selectSub(function ($query) {
-              $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
-                  ->selectRaw('SUM(cell_qty)')
-                  ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
-          }, 'no_of_cell_damage')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
-          ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
+            ->select([
+                'ninetydeg.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as ninetydeg_operator-name',
+                'b.fullname as ninetydeg_incharge-name',
+                'c.fullname as createdBy',
+            ])
+            // Subquery for cell damage count
+            ->selectSub(function ($query) {
+                $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
+                    ->selectRaw('SUM(cell_qty)')
+                    ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
+            }, 'no_of_cell_damage')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
+            ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
 
-      // 2. Add Conditional Filters (Laravel handles the sanitization)
-      if ($request->filled('createdBy')) {
-          $query->where('ninetydeg.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('ninetydeg.ninetydeg_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('ninetydeg.ninetydeg_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
-      }
-      if ($request->filled('toDate')) {
-          $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
-      }
-      if ($request->filled('batchNo')) {
-          $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
-      }
-      
-      $query->where('ninetydeg.status', 1);
+        // 2. Add Conditional Filters (Laravel handles the sanitization)
+        if ($request->filled('createdBy')) {
+            $query->where('ninetydeg.created_by', $request->createdBy);
+        }
+        if ($request->filled('operator')) {
+            $query->where('ninetydeg.ninetydeg_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('ninetydeg.ninetydeg_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
+        }
+        if ($request->filled('toDate')) {
+            $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
+        }
 
-      // 3. Finalize with Grouping, Ordering, and Pagination
-      $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
-                                        ->orderBy('ninetydeg.created_at', 'DESC')
-                                        ->paginate(10);
+        $query->where('ninetydeg.status', 1);
+
+        // 3. Finalize with Grouping, Ordering, and Pagination
+        $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
+            ->orderBy('ninetydeg.created_at', 'DESC')
+            ->paginate(10);
 
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.passed-all', $data);
     }
-    
+
     public function rejectedListAll(Request $request)
     {
         $data['menu'] = '90deg-qc-all';
-        
-      $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+
+        $data['ShiftMaster'] = DB::table('hr_mstr_shift')
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-       // 1. Start the query builder
-      $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
-          ->select([
-              'ninetydeg.*',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as ninetydeg_operator-name',
-              'b.fullname as ninetydeg_incharge-name',
-              'c.fullname as createdBy',
-          ])
-          // Subquery for cell damage count
-          ->selectSub(function ($query) {
-              $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
-                  ->selectRaw('SUM(cell_qty)')
-                  ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
-          }, 'no_of_cell_damage')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
-          ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
+        // 1. Start the query builder
+        $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
+            ->select([
+                'ninetydeg.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as ninetydeg_operator-name',
+                'b.fullname as ninetydeg_incharge-name',
+                'c.fullname as createdBy',
+            ])
+            // Subquery for cell damage count
+            ->selectSub(function ($query) {
+                $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
+                    ->selectRaw('SUM(cell_qty)')
+                    ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
+            }, 'no_of_cell_damage')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
+            ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
 
-      // 2. Add Conditional Filters (Laravel handles the sanitization)
-      if ($request->filled('createdBy')) {
-          $query->where('ninetydeg.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('ninetydeg.ninetydeg_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('ninetydeg.ninetydeg_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
-      }
-      if ($request->filled('toDate')) {
-          $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
-      }
-      if ($request->filled('batchNo')) {
-          $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
-      }
-      
-      $query->where('ninetydeg.status', 2);
-      // 3. Finalize with Grouping, Ordering, and Pagination
-      $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
-                                        ->orderBy('ninetydeg.created_at', 'DESC')
-                                        ->paginate(10);
+        // 2. Add Conditional Filters (Laravel handles the sanitization)
+        if ($request->filled('createdBy')) {
+            $query->where('ninetydeg.created_by', $request->createdBy);
+        }
+        if ($request->filled('operator')) {
+            $query->where('ninetydeg.ninetydeg_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('ninetydeg.ninetydeg_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
+        }
+        if ($request->filled('toDate')) {
+            $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
+        }
+
+        $query->where('ninetydeg.status', 2);
+        // 3. Finalize with Grouping, Ordering, and Pagination
+        $data['AllLaminatorLists'] = $query->groupBy('ninetydeg.ninetydeg_id')
+            ->orderBy('ninetydeg.created_at', 'DESC')
+            ->paginate(10);
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.rejected-all', $data);
     }
-    
-    
+
+
     public function pendingExcel(Request $request)
     {
         $data['menu'] = 'elqc-setup';
 
         // Initialize the query builder
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
-          ->select([
-              'elqc.*',
-              'ninetydeg.ninetydeg_id',
-              'ninetydeg.status as sts',
-              'ninetydeg.rwrk_status as rwsts',
-              'ninetydeg.ninetydeg_source',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as elqc_operator_name',
-              'b.fullname as elqc_incharge_name',
-              'c.fullname as createdBy'
-          ])
-          ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
-          ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
+            ->select([
+                'elqc.*',
+                'ninetydeg.ninetydeg_id',
+                'ninetydeg.status as sts',
+                'ninetydeg.rwrk_status as rwsts',
+                'ninetydeg.ninetydeg_source',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as elqc_operator_name',
+                'b.fullname as elqc_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('tbl_factory_ninetydeg_laravel as ninetydeg', 'ninetydeg.ninetydeg_barcode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
+            ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
 
         // 2. Apply the complex mandatory condition
         $query->where(function ($q) {
@@ -569,12 +570,12 @@ class NinetyDeg_Controller extends Controller
             "Expires"             => "0"
         ];
 
-        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt',  'Bus Bar', 'Operator', 'Incharge'];//'Cell Efficiency',
+        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt',  'Bus Bar', 'Operator', 'Incharge']; //'Cell Efficiency',
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -582,8 +583,8 @@ class NinetyDeg_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 fputcsv($file, [
                     $sl,
                     \Carbon\Carbon::parse($row->elqc_date)->format('d/m/Y'),
@@ -605,62 +606,62 @@ class NinetyDeg_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    
+
     public function passedExcel(Request $request)
     {
         $data['menu'] = 'elqc-setup';
 
         // Initialize the query builder
-     $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
-          ->select([
-              'ninetydeg.*',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as ninetydeg_operator_name',
-              'b.fullname as ninetydeg_incharge_name',
-              'c.fullname as createdBy',
-          ])
-          // Subquery for cell damage count
-          ->selectSub(function ($query) {
-              $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
-                  ->selectRaw('SUM(cell_qty)')
-                  ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
-          }, 'no_of_cell_damage')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
-          ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
+        $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
+            ->select([
+                'ninetydeg.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as ninetydeg_operator_name',
+                'b.fullname as ninetydeg_incharge_name',
+                'c.fullname as createdBy',
+            ])
+            // Subquery for cell damage count
+            ->selectSub(function ($query) {
+                $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
+                    ->selectRaw('SUM(cell_qty)')
+                    ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
+            }, 'no_of_cell_damage')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
+            ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
 
-      // 2. Add Conditional Filters (Laravel handles the sanitization)
-      if ($request->filled('createdBy')) {
-          $query->where('ninetydeg.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('ninetydeg.ninetydeg_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('ninetydeg.ninetydeg_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
-      }
-      if ($request->filled('toDate')) {
-          $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
-      }
-      if ($request->filled('batchNo')) {
-          $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
-      }
-      
-      $query->where('ninetydeg.status', 1);
+        // 2. Add Conditional Filters (Laravel handles the sanitization)
+        if ($request->filled('createdBy')) {
+            $query->where('ninetydeg.created_by', $request->createdBy);
+        }
+        if ($request->filled('operator')) {
+            $query->where('ninetydeg.ninetydeg_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('ninetydeg.ninetydeg_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
+        }
+        if ($request->filled('toDate')) {
+            $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
+        }
 
-      // 3. Finalize with Grouping, Ordering, and Pagination
-      $AllLists = $query->groupBy('ninetydeg.ninetydeg_id')
-                                        ->orderBy('ninetydeg.created_at', 'DESC')
-                                        ->get();
+        $query->where('ninetydeg.status', 1);
+
+        // 3. Finalize with Grouping, Ordering, and Pagination
+        $AllLists = $query->groupBy('ninetydeg.ninetydeg_id')
+            ->orderBy('ninetydeg.created_at', 'DESC')
+            ->get();
 
 
         $fileName = 'passed_ELQC_report_' . date('Ymd_His') . '.csv';
@@ -675,9 +676,9 @@ class NinetyDeg_Controller extends Controller
         $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -685,9 +686,9 @@ class NinetyDeg_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
+
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 //if ($row->status == '1' && $row->rwrk_status == '1'){
                 fputcsv($file, [
                     $sl,
@@ -702,7 +703,7 @@ class NinetyDeg_Controller extends Controller
                     $row->ninetydeg_operator_name,
                     $row->ninetydeg_incharge_name,
                 ]);
-              //}
+                //}
             }
 
             fclose($file);
@@ -711,67 +712,67 @@ class NinetyDeg_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    
+
     public function rejectedExcel(Request $request)
     {
         $data['menu'] = 'elqc-setup';
 
         // Initialize the query builder
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
-      ->selectRaw('SUM(cell_qty)')
-      ->whereColumn('d2.elqcId', 'elqc.elqc_id');
+            ->selectRaw('SUM(cell_qty)')
+            ->whereColumn('d2.elqcId', 'elqc.elqc_id');
 
-      // 2. Build the main query
-      $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
-          ->select([
-              'ninetydeg.*',
-              'psl.wattage',
-              'sh.shift as shiftdtl',
-              'a.fullname as ninetydeg_operator_name',
-              'b.fullname as ninetydeg_incharge_name',
-              'c.fullname as createdBy',
-          ])
-          // Subquery for cell damage count
-          ->selectSub(function ($query) {
-              $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
-                  ->selectRaw('SUM(cell_qty)')
-                  ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
-          }, 'no_of_cell_damage')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
-          ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
+        // 2. Build the main query
+        $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
+            ->select([
+                'ninetydeg.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as ninetydeg_operator_name',
+                'b.fullname as ninetydeg_incharge_name',
+                'c.fullname as createdBy',
+            ])
+            // Subquery for cell damage count
+            ->selectSub(function ($query) {
+                $query->from('tbl_factory_ninetydeg_defect_laravel as d2')
+                    ->selectRaw('SUM(cell_qty)')
+                    ->whereColumn('d2.ninetydeg_Id', 'ninetydeg.ninetydeg_id');
+            }, 'no_of_cell_damage')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'ninetydeg.ninetydeg_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'ninetydeg.ninetydeg_batchNo')
+            ->leftJoin('mstr_emp as a', 'ninetydeg.ninetydeg_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'ninetydeg.ninetydeg_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'ninetydeg.created_by', '=', 'c.id');
 
-      // 2. Add Conditional Filters (Laravel handles the sanitization)
-      if ($request->filled('createdBy')) {
-          $query->where('ninetydeg.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('ninetydeg.ninetydeg_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('ninetydeg.ninetydeg_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
-      }
-      if ($request->filled('toDate')) {
-          $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
-      }
-      if ($request->filled('batchNo')) {
-          $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
-      }
-      
-      $query->where('ninetydeg.status', 2);
+        // 2. Add Conditional Filters (Laravel handles the sanitization)
+        if ($request->filled('createdBy')) {
+            $query->where('ninetydeg.created_by', $request->createdBy);
+        }
+        if ($request->filled('operator')) {
+            $query->where('ninetydeg.ninetydeg_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('ninetydeg.ninetydeg_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('ninetydeg.ninetydeg_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('ninetydeg.created_at', '>=', $request->fromDate);
+        }
+        if ($request->filled('toDate')) {
+            $query->whereDate('ninetydeg.created_at', '<=', $request->toDate);
+        }
+        if ($request->filled('batchNo')) {
+            $query->where('ninetydeg.ninetydeg_batchNo', $request->batchNo);
+        }
 
-      // 3. Finalize with Grouping, Ordering, and Pagination
-      $AllLists = $query->groupBy('ninetydeg.ninetydeg_id')
-                                        ->orderBy('ninetydeg.created_at', 'DESC')
-                                        ->get();
+        $query->where('ninetydeg.status', 2);
+
+        // 3. Finalize with Grouping, Ordering, and Pagination
+        $AllLists = $query->groupBy('ninetydeg.ninetydeg_id')
+            ->orderBy('ninetydeg.created_at', 'DESC')
+            ->get();
 
         $fileName = 'rejected_ELQC_report_' . date('Ymd_His') . '.csv';
         $headers = [
@@ -785,9 +786,9 @@ class NinetyDeg_Controller extends Controller
         $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -795,9 +796,9 @@ class NinetyDeg_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
-              //if ($row->status == '2' && $row->rwrk_status == '2'){
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
+                //if ($row->status == '2' && $row->rwrk_status == '2'){
                 fputcsv($file, [
                     $sl,
                     \Carbon\Carbon::parse($row->ninetydeg_date)->format('d/m/Y'),
@@ -811,7 +812,7 @@ class NinetyDeg_Controller extends Controller
                     $row->ninetydeg_operator_name,
                     $row->ninetydeg_incharge_name,
                 ]);
-              //}
+                //}
             }
 
             fclose($file);
@@ -821,7 +822,7 @@ class NinetyDeg_Controller extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    
+
 
     public function add_qc()
     {
@@ -916,22 +917,22 @@ class NinetyDeg_Controller extends Controller
         $btch_viewNo = $request->get('id');
         $action = $request->get('action') ?? '';
         $batchNo = $request->get('id') ?? '';
-        
+
         if ($action === 'view') {
             $exists = DB::table('tbl_factory_bushing_laravel')
-            ->select('bushing_logo')
-            ->where('bushing_barCode', $barcode)
-            ->where('bushing_batchNo', $btch_viewNo)
-            //->where('bushing_id', $batchNo)
-            ->first();
+                ->select('bushing_logo')
+                ->where('bushing_barCode', $barcode)
+                ->where('bushing_batchNo', $btch_viewNo)
+                //->where('bushing_id', $batchNo)
+                ->first();
         } else {
             $exists = DB::table('tbl_factory_bushing_laravel')
-            ->select('bushing_id' , 'bushing_logo')
-            ->where('bushing_barCode', $barcode)
-            ->where('bushing_batchNo', $batchNo)
-            ->get();
+                ->select('bushing_id', 'bushing_logo')
+                ->where('bushing_barCode', $barcode)
+                ->where('bushing_batchNo', $batchNo)
+                ->get();
         }
-            
+
         // If action is 'view', we're in view mode - skip EL QC validation
         if ($action === 'view') {
             return response()->json([
@@ -940,23 +941,23 @@ class NinetyDeg_Controller extends Controller
                 'message' => 'Barcode is valid (view mode).',
             ]);
         }
-            
+
         // Check if barcode passed in 90Deg QC or Not
         $passExists = DB::table('tbl_factory_el_qc_laravel')
             ->where('elqc_barcode', $barcode)
             ->where('elqc_batchNo', $batchNo)
-            ->exists(); 
-            
+            ->exists();
+
         // Check if barcode already used in JB
         $elQcExists = DB::table('tbl_factory_ninetydeg_laravel')
             ->where('ninetydeg_barcode', $barcode)
             ->where('ninetydeg_batchNo', $batchNo)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('status', '!=', 0)
-                      ->orWhere('rwrk_status', '!=', '');
+                    ->orWhere('rwrk_status', '!=', '');
             })
             ->exists();
-    
+
         // If found in EL QC - INVALID
         if ($elQcExists) {
             return response()->json([
@@ -995,80 +996,78 @@ class NinetyDeg_Controller extends Controller
         } else {
 
             $demoId = date('YmdHis');
-        
+
 
             $barCode = $request->input('barCode');
-                
+
             // Check if valid serial number exists
             $bExists = DB::table('factory_serial_number_details')
-              ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
-              ->where('sl.Approve_status', 'APPROVE')
-              ->whereNull('factory_serial_number_details.status')
-              ->where('factory_serial_number_details.sl_no', $barCode)
-              ->exists();
-              
-              
-            if ($bExists) {
-              
-            //Bushing Auto Entry
-                $exists = DB::table('tbl_factory_bushing_laravel')
-                ->where('bushing_barCode', request()->input('barCode'))
+                ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+                ->where('sl.Approve_status', 'APPROVE')
+                ->whereNull('factory_serial_number_details.status')
+                ->where('factory_serial_number_details.sl_no', $barCode)
                 ->exists();
+
+
+            if ($bExists) {
+
+                //Bushing Auto Entry
+                $exists = DB::table('tbl_factory_bushing_laravel')
+                    ->where('bushing_barCode', request()->input('barCode'))
+                    ->exists();
                 if ($exists == false) {
                     $data = array(
-                    'bushing_id' => $demoId,
-                    'bushing_date' => date('d-m-Y'),
-                    'bushing_time' => date('H:i:s'),
-                    'bushing_operator' => request()->input('operator'),
-                    'bushing_batchNo' => request()->input('batchNo'),
-                    'bushing_incherge' => request()->input('incharge'),
-                    'bushing_shift' => request()->input('shift'),
-                    'bushing_plant' => request()->input('plant'),
-                    'bushing_logo' => 'Yes',
-                    'bushing_hasDamage' => 'No',
-                    'bushing_rfid' => request()->input('rfid'),
-                    'bushing_barCode' => request()->input('barCode'),
-                    'created_by' => request()->session()->get('empId')
+                        'bushing_id' => $demoId,
+                        'bushing_date' => date('d-m-Y'),
+                        'bushing_time' => date('H:i:s'),
+                        'bushing_operator' => request()->input('operator'),
+                        'bushing_batchNo' => request()->input('batchNo'),
+                        'bushing_incherge' => request()->input('incharge'),
+                        'bushing_shift' => request()->input('shift'),
+                        'bushing_plant' => request()->input('plant'),
+                        'bushing_logo' => 'Yes',
+                        'bushing_hasDamage' => 'No',
+                        'bushing_rfid' => request()->input('rfid'),
+                        'bushing_barCode' => request()->input('barCode'),
+                        'created_by' => request()->session()->get('empId')
                     );
-    
+
                     $res = Bushing_Model::create($data);
-    
-                    $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
-    
+
+                    $materials = ProductSetUpMaterial_Model::where('batchNo', request()->input('batchNo'))->get();
+
                     foreach ($materials as $material) {
                         $data = array(
                             'bushingId' => $demoId,
                             'prd_matId' => $material['material'],
                             'status' => 'Yes'
                         );
-    
+
                         BushingMaterial_Model::create($data);
                     }
-    
-                    
                 }
-    
+
                 //REWORK
                 $exists = DB::table('tbl_factory_el_qc_laravel')
-                ->where('elqc_barcode', request()->input('barCode'))
-                ->where('status', '<>', '1')
-                ->exists();
+                    ->where('elqc_barcode', request()->input('barCode'))
+                    ->where('status', '<>', '1')
+                    ->exists();
                 if ($exists == true) {
-                    $qry = EL_QC::where('elqc_barcode',$request->input('barCode'));
+                    $qry = EL_QC::where('elqc_barcode', $request->input('barCode'));
                     $data = array(
                         'status'        => '1',
                         'rwrk_status'   => '1'
                     );
-    
+
                     $res =  $qry->update($data);
                 }
-                
+
                 //Normal
                 $exists = DB::table('tbl_factory_el_qc_laravel')
-                ->where('elqc_barcode', request()->input('barCode'))
-                ->exists();
+                    ->where('elqc_barcode', request()->input('barCode'))
+                    ->exists();
                 if ($exists == false) {
-    
+
                     $data = array(
                         'elqc_id'       => $demoId,
                         'elqc_date'     => date('d-m-Y'),
@@ -1086,53 +1085,51 @@ class NinetyDeg_Controller extends Controller
                         'elqc_barcode'  => $request->input('barCode'),
                         'created_by'    => $request->session()->get('empId')
                     );
-    
+
                     $res = EL_QC::create($data);
-    
+
                     EL_QC_History::create([
                         'el_qc_id'   => $demoId,
                         'action'     => 'Raised',
                         'ip_address' => $this->getUserIP(),
                         'created_by' => $request->session()->get('empId')
                     ]);
-                    
                 }
-                
             }
-            
-           
 
-             // Check if valid serial number exists
+
+
+            // Check if valid serial number exists
             $bExists = DB::table('factory_serial_number_details')
-              ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
-              ->where('sl.Approve_status', 'APPROVE')
-              ->whereNull('factory_serial_number_details.status')
-              ->where('factory_serial_number_details.sl_no', $barCode)
-              ->exists();
-    
+                ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+                ->where('sl.Approve_status', 'APPROVE')
+                ->whereNull('factory_serial_number_details.status')
+                ->where('factory_serial_number_details.sl_no', $barCode)
+                ->exists();
+
             //$Bexists = true;
             $PreExists = true;
-    
+
             if ($bExists && $PreExists) {
-    
+
                 $exists = DB::table('tbl_factory_ninetydeg_laravel')
                     ->where('ninetydeg_barcode', $request->input('barCode'))
                     ->exists();
-    
+
                 $validBarcode = DB::table('tbl_factory_ninetydeg_laravel')
                     ->select('*')
                     ->where('ninetydeg_barcode', $request->input('barCode'))
                     ->where('status', '0')
                     ->where('rwrk_status', '')
                     ->first();
-    
+
                 if ($exists == false) {
-    
+
                     $qcId = DB::table('tbl_factory_el_qc_laravel')
                         ->where('elqc_barcode', $request->input('barCode'))
                         ->where('elqc_batchNo', $request->input('batchNo'))
                         ->value('elqc_id');
-    
+
                     $id = date('YmdHis');
                     $data = array(
                         'ninetydeg_id'          => $id,
@@ -1154,29 +1151,29 @@ class NinetyDeg_Controller extends Controller
                         'scan_flag' => 1,
                         'created_by'            => $request->session()->get('empId')
                     );
-    
+
                     $res = NinetyDeg_Model::create($data);
-    
+
                     NinetyDegHist_Model::create([
                         'ninetydeg_id' => $id,
                         'action'       => 'Raised',
                         'ip_address'   => $this->getUserIP(),
                         'created_by'   => auth()->id()
                     ]);
-    
+
                     $cell_positions    = $request->input('cell_position', []);
                     $cell_qtys         = $request->input('cell_qty', []);
                     $dmgMat_reasons    = $request->input('dmgMat_reason', []);
                     $defect_categories = $request->input('dmgMat_cat', []);
                     $res_prsns         = $request->input('res_prsn', []);
                     $res_machines      = $request->input('res_machine', []);
-    
+
                     if ($request->input('el_type') === '0' && is_array($cell_positions) && count($cell_positions) > 0) {
                         foreach ($cell_positions as $i => $cell_no) {
                             if ($cell_no === null || $cell_no === '') {
                                 continue;
                             }
-    
+
                             NinetyDegDamage_Model::create([
                                 'ninetydeg_Id' => $id,
                                 'cell_no'      => $cell_no,
@@ -1188,7 +1185,48 @@ class NinetyDeg_Controller extends Controller
                             ]);
                         }
                     }
-    
+
+                    // RAW MATERIAL CONSUMPTION
+
+                    if ($request->input('el_type') != 1) {
+
+                        $batchNoGetBom = $request->input('batchNo');
+                        $transacCat = 'Material Consumption due to reject in Ninetydegree QC';
+
+                        $date = date('Y/m/d');
+
+                        $batchMats = DB::table('tbl_factory_production_setup_material_laravel')
+                            ->select('bomMat', 'bomQty')
+                            ->where('batchNo', '=', $batchNoGetBom) // Fixed quotes
+                            ->get();
+
+                        foreach ($batchMats as $batchMat) {
+
+                            DB::table('master_raw_material')
+                                ->where('Organization', 4)
+                                ->where('Godown_Name', 60)
+                                ->where('Material', $batchMat->bomMat)
+                                ->decrement('Quantity', $batchMat->bomQty);
+
+                            $data = array(
+                                'matrerial'         => $batchMat->bomMat,
+                                'date'              => $date,
+                                'batch'             => $batchNoGetBom,
+                                'qty'               => $batchMat->bomQty,
+                                'godown'            => 60,
+                                'organisation'      => 4,
+                                'refNo'             => $id,
+                                'transacCategory'   => $transacCat,
+                                'raisedBy'          => $request->session()->get('empId'),
+                                'ip'                => $this->getUserIP()
+                            );
+
+                            Raw_Consumption_Transac_Model::create($data);
+                        }
+                    }
+
+                    // RAW MATERIAL CONSUMPTION 
+
                     $lock     = request()->input('lock');
                     $batchNo  = request()->input('batchNo');
                     $oprtr    = request()->input('operator');
@@ -1196,7 +1234,7 @@ class NinetyDeg_Controller extends Controller
                     $shift    = request()->input('shift');
                     $plant    = request()->input('plant');
                     $page     = request()->input('page');
-    
+
                     if ($res->exists) {
                         if ($lock && $page) {
                             $url = 'production-lineup/90deg-qc/add?page=ALL&lock=1&batchNo=' . $batchNo . '&operator=' . $oprtr . '&shift=' . $shift . '&incharge=' . $incherge . '&plant=' . $plant;
@@ -1205,41 +1243,40 @@ class NinetyDeg_Controller extends Controller
                             return redirect('production-lineup/90deg-qc')->with('success', '90deg-qc data stored successfully!');
                         }
                     }
-    
                 } elseif ($exists == true && count((array)$validBarcode) > 0) {
-    
+
                     DB::transaction(function () use ($request) {
-    
+
                         // ── Step 1: Fetch the existing NinetyDeg record ──────────────────────
                         $existingQC = NinetyDeg_Model::where('ninetydeg_barcode', $request->input('barCode'))->first();
-    
+
                         if ($existingQC) {
-    
+
                             // ── Step 2: Copy NinetyDeg_Model → NinetyDeg_Model_RWRK ──────────
                             NinetyDeg_Model_RWRK::create($existingQC->toArray());
-    
+
                             // ── Step 3: Fetch & copy NinetyDegDamage_Model → NinetyDegDamage_Model_RWRK ──
                             $existingDefects = NinetyDegDamage_Model::where('ninetydeg_Id', $existingQC->ninetydeg_id)->get();
-    
+
                             foreach ($existingDefects as $defect) {
                                 NinetyDegDamage_Model_RWRK::create($defect->toArray());
                             }
-    
+
                             // ── Step 4: Delete original NinetyDegDamage_Model records ─────────
                             NinetyDegDamage_Model::where('ninetydeg_Id', $existingQC->ninetydeg_id)->delete();
-    
+
                             // ── Step 5: Delete original NinetyDeg_Model record ────────────────
                             NinetyDeg_Model::where('ninetydeg_id', $existingQC->ninetydeg_id)->delete();
                         }
-    
+
                         // ── Step 6: Prepare fresh NinetyDeg record ───────────────────────────
                         $qcId = DB::table('tbl_factory_el_qc_laravel')
                             ->where('elqc_barcode', $request->input('barCode'))
                             ->where('elqc_batchNo', $request->input('batchNo'))
                             ->value('elqc_id');
-    
+
                         $newId = date('YmdHis');
-    
+
                         $newData = array(
                             'ninetydeg_id'          => $newId,
                             'ninetydeg_date'        => date('d-m-Y'),
@@ -1259,17 +1296,17 @@ class NinetyDeg_Controller extends Controller
                             'ninetydeg_barcode'     => $request->input('barCode'),
                             'created_by'            => $request->session()->get('empId')
                         );
-    
+
                         // ── Step 7: Insert fresh NinetyDeg record ────────────────────────────
                         NinetyDeg_Model::create($newData);
-    
+
                         NinetyDegHist_Model::create([
                             'ninetydeg_id' => $newId,
                             'action'       => 'Rework',
                             'ip_address'   => $this->getUserIP(),
                             'created_by'   => auth()->id()
                         ]);
-    
+
                         // ── Step 8: Insert fresh NinetyDegDamage records ─────────────────────
                         $cell_positions    = $request->input('cell_position', []);
                         $cell_qtys         = $request->input('cell_qty', []);
@@ -1277,13 +1314,13 @@ class NinetyDeg_Controller extends Controller
                         $defect_categories = $request->input('dmgMat_cat', []);
                         $res_prsns         = $request->input('res_prsn', []);
                         $res_machines      = $request->input('res_machine', []);
-    
+
                         if ($request->input('el_type') === '0' && is_array($cell_positions) && count($cell_positions) > 0) {
                             foreach ($cell_positions as $i => $cell_no) {
                                 if ($cell_no === null || $cell_no === '') {
                                     continue;
                                 }
-    
+
                                 NinetyDegDamage_Model::create([
                                     'ninetydeg_Id' => $newId,
                                     'cell_no'      => $cell_no,
@@ -1296,13 +1333,11 @@ class NinetyDeg_Controller extends Controller
                             }
                         }
                     });
-    
+
                     return redirect('production-lineup/90deg-qc')->with('success', '90deg-qc rework data stored successfully!');
-    
                 } else {
                     return redirect('production-lineup/90deg-qc')->with('success', '90deg-qc data store failed! Duplicate Barcode.');
                 }
-    
             } else {
                 return redirect('production-lineup/90deg-qc')->with('success', '90deg-qc data store failed! This Barcode not Valid or already Used');
             }
@@ -1343,8 +1378,8 @@ class NinetyDeg_Controller extends Controller
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.damage', $data);
     }
-    
-    
+
+
     public function view_90deg_qc($id = null)
     {
         //echo 'hi'; exit;
@@ -1387,18 +1422,18 @@ class NinetyDeg_Controller extends Controller
             ->select('psl.cellRow', 'psl.celColumn')
             ->where('psl.batchNo', $batchNo)
             ->first();
-            
+
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.NinetyDeg.view_90deg_qc', $data);
     }
-    
+
     public function fetchRFIDBar(Request $request)
     {
         $batchNo = $request->input('batch_No');
         $elqcNo = $request->input('elqcNo');
 
         $RFIDBardtls = DB::table('tbl_factory_el_qc_laravel as bol')
-            ->select('bol.elqc_rfid','bol.elqc_barcode')
+            ->select('bol.elqc_rfid', 'bol.elqc_barcode')
             ->where('bol.elqc_batchNo', $batchNo)
             ->where('bol.elqc_id', $elqcNo)
             ->first();

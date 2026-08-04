@@ -9,21 +9,22 @@ use App\Models\ProductionLineUp\{JB_Model, JB_Damage_Model, JB_Hist_Model};
 use App\Models\ProductionLineUp\{NinetyDeg_Model, NinetyDeg_Model_RWRK, NinetyDegDamage_Model, NinetyDegDamage_Model_RWRK, NinetyDegHist_Model};
 use App\Models\ProductionLineUp\{EL_QC, EL_QC_Defect, EL_QC_RWRK, EL_QC_Defect_RWRK, EL_QC_History};
 use App\Models\ProductionLineUp\{Bushing_Model, BushingMaterial_Model, BushingDamageMaterial_Model};
-use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model};
+use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model, Raw_Consumption_Transac_Model};
 use Carbon\Carbon;
 
 class JunctionBox_Controller extends Controller
 {
-    public  static function PermittedMenuList($sessionId){
-      //Menu Permission
-      $res = DB::table('prod_menu_laravel')
-      ->leftJoin('prod_menu_acc_laravel', 'prod_menu_laravel.id', '=', 'prod_menu_acc_laravel.menu_id')
-      ->where('prod_menu_acc_laravel.emp_id', '=', $sessionId)
-      ->where('prod_menu_acc_laravel.accessType', '=', 'yes')
-      ->select('prod_menu_laravel.*', 'prod_menu_acc_laravel.accessType')
-      ->get();
-      
-      return $res;
+    public  static function PermittedMenuList($sessionId)
+    {
+        //Menu Permission
+        $res = DB::table('prod_menu_laravel')
+            ->leftJoin('prod_menu_acc_laravel', 'prod_menu_laravel.id', '=', 'prod_menu_acc_laravel.menu_id')
+            ->where('prod_menu_acc_laravel.emp_id', '=', $sessionId)
+            ->where('prod_menu_acc_laravel.accessType', '=', 'yes')
+            ->select('prod_menu_laravel.*', 'prod_menu_acc_laravel.accessType')
+            ->get();
+
+        return $res;
     }
     public function getUserIP()
     {
@@ -46,24 +47,24 @@ class JunctionBox_Controller extends Controller
 
         return $ip;
     }
-    
+
     public function index()
     {
         $data['menu'] = 'junctionbox';
-        
+
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
         $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
             ->select([
@@ -85,7 +86,7 @@ class JunctionBox_Controller extends Controller
             // Base WHERE conditions
             ->whereNull('jb.jb_QC')
             ->where('ninetydeg.status', 1);
-        
+
         // 2. Conditionally apply filters safely using request() or $request->input()
         if (request()->filled('createdBy')) {
             $query->where('ninetydeg.created_by', request('createdBy'));
@@ -108,53 +109,53 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('ninetydeg.ninetydeg_batchNo', request('batchNo'));
         }
-        
-        
+
+
         $data['AllLists'] = $query->groupBy('ninetydeg.ninetydeg_barcode')
             ->orderByDesc('ninetydeg.created_at')
             ->paginate(10);
-            
-            $data['AllLaminatorLists'] = [];
+
+        $data['AllLaminatorLists'] = [];
 
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.index', $data);
     }
-    
+
     public function passed()
     {
         $data['menu'] = 'junctionbox';
-        
+
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
         $Condition = '';
         $Cond = [];
 
         $query = DB::table('tbl_factory_jb_laravel as jb')
-        ->select([
-            'jb.*',
-            'psl.wattage',
-            'sh.shift as shiftdtl',
-            'a.fullname as jb_operator_name',
-            'b.fullname as jb_incharge_name',
-            'c.fullname as createdBy'
-        ])
-        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+            ->select([
+                'jb.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as jb_operator_name',
+                'b.fullname as jb_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+            ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
         // 2. Safely apply conditional filters using request()->filled()
         if (request()->filled('createdBy')) {
@@ -178,7 +179,7 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('jb.jb_batchNo', request('batchNo'));
         }
-        $query->where('jb.status', '=',1);
+        $query->where('jb.status', '=', 1);
 
         $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
             ->orderByDesc('jb.created_at')
@@ -187,39 +188,39 @@ class JunctionBox_Controller extends Controller
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.passed', $data);
     }
-    
+
     public function rejected()
     {
         $data['menu'] = 'junctionbox';
-        
+
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-         $query = DB::table('tbl_factory_jb_laravel as jb')
-        ->select([
-            'jb.*',
-            'psl.wattage',
-            'sh.shift as shiftdtl',
-            'a.fullname as jb_operator_name',
-            'b.fullname as jb_incharge_name',
-            'c.fullname as createdBy'
-        ])
-        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+        $query = DB::table('tbl_factory_jb_laravel as jb')
+            ->select([
+                'jb.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as jb_operator_name',
+                'b.fullname as jb_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+            ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
         // 2. Safely apply conditional filters using request()->filled()
         if (request()->filled('createdBy')) {
@@ -243,7 +244,7 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('jb.jb_batchNo', request('batchNo'));
         }
-        $query->where('jb.status', '<>',1);
+        $query->where('jb.status', '<>', 1);
 
         $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
             ->orderByDesc('jb.created_at')
@@ -258,20 +259,20 @@ class JunctionBox_Controller extends Controller
     public function indexAll()
     {
         $data['menu'] = 'junctionbox';
-        
+
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
         $query = DB::table('tbl_factory_ninetydeg_laravel as ninetydeg')
             ->select([
@@ -293,7 +294,7 @@ class JunctionBox_Controller extends Controller
             // Base WHERE conditions
             ->whereNull('jb.jb_QC')
             ->where('ninetydeg.status', 1);
-        
+
         // 2. Conditionally apply filters safely using request() or $request->input()
         if (request()->filled('createdBy')) {
             $query->where('ninetydeg.created_by', request('createdBy'));
@@ -316,53 +317,53 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('ninetydeg.ninetydeg_batchNo', request('batchNo'));
         }
-        
-        
+
+
         $data['AllLists'] = $query->groupBy('ninetydeg.ninetydeg_barcode')
             ->orderByDesc('ninetydeg.created_at')
             ->paginate(10);
-            
-            $data['AllLaminatorLists'] = [];
+
+        $data['AllLaminatorLists'] = [];
 
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.index', $data);
     }
-    
+
     public function passedAll()
     {
         $data['menu'] = 'junctionbox';
-        
+
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
         $Condition = '';
         $Cond = [];
 
         $query = DB::table('tbl_factory_jb_laravel as jb')
-        ->select([
-            'jb.*',
-            'psl.wattage',
-            'sh.shift as shiftdtl',
-            'a.fullname as jb_operator_name',
-            'b.fullname as jb_incharge_name',
-            'c.fullname as createdBy'
-        ])
-        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+            ->select([
+                'jb.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as jb_operator_name',
+                'b.fullname as jb_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+            ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
         // 2. Safely apply conditional filters using request()->filled()
         if (request()->filled('createdBy')) {
@@ -386,7 +387,7 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('jb.jb_batchNo', request('batchNo'));
         }
-        $query->where('jb.status', '=',1);
+        $query->where('jb.status', '=', 1);
 
         $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
             ->orderByDesc('jb.created_at')
@@ -395,39 +396,39 @@ class JunctionBox_Controller extends Controller
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.passed', $data);
     }
-    
+
     public function rejectedAll()
     {
         $data['menu'] = 'junctionbox';
-        
+
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-         $query = DB::table('tbl_factory_jb_laravel as jb')
-        ->select([
-            'jb.*',
-            'psl.wattage',
-            'sh.shift as shiftdtl',
-            'a.fullname as jb_operator_name',
-            'b.fullname as jb_incharge_name',
-            'c.fullname as createdBy'
-        ])
-        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+        $query = DB::table('tbl_factory_jb_laravel as jb')
+            ->select([
+                'jb.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as jb_operator_name',
+                'b.fullname as jb_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+            ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
         // 2. Safely apply conditional filters using request()->filled()
         if (request()->filled('createdBy')) {
@@ -451,7 +452,7 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('jb.jb_batchNo', request('batchNo'));
         }
-        $query->where('jb.status', '<>',1);
+        $query->where('jb.status', '<>', 1);
 
         $data['AllLaminatorLists'] = $query->groupBy('jb.jb_id')
             ->orderByDesc('jb.created_at')
@@ -460,9 +461,9 @@ class JunctionBox_Controller extends Controller
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.rejected', $data);
     }
-    
-    
-    
+
+
+
     public function pendingExcel(Request $request)
     {
         $data['menu'] = 'elqc-setup';
@@ -487,7 +488,7 @@ class JunctionBox_Controller extends Controller
             // Base WHERE conditions
             ->whereNull('jb.jb_QC')
             ->where('ninetydeg.status', 1);
-        
+
         // 2. Conditionally apply filters safely using request() or $request->input()
         if (request()->filled('createdBy')) {
             $query->where('ninetydeg.created_by', request('createdBy'));
@@ -510,8 +511,8 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('ninetydeg.ninetydeg_batchNo', request('batchNo'));
         }
-        
-        
+
+
         $AllLists = $query->groupBy('ninetydeg.ninetydeg_barcode')
             ->orderByDesc('ninetydeg.created_at')
             ->get();
@@ -526,12 +527,12 @@ class JunctionBox_Controller extends Controller
             "Expires"             => "0"
         ];
 
-        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt',  'Bus Bar', 'Operator', 'Incharge'];//'Cell Efficiency',
+        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt',  'Bus Bar', 'Operator', 'Incharge']; //'Cell Efficiency',
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -539,8 +540,8 @@ class JunctionBox_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 fputcsv($file, [
                     $sl,
                     \Carbon\Carbon::parse($row->ninetydeg_date)->format('d/m/Y'),
@@ -562,26 +563,26 @@ class JunctionBox_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    
+
     public function passedExcel(Request $request)
     {
         $data['menu'] = 'elqc-setup';
 
         // Initialize the query builder
         $query = DB::table('tbl_factory_jb_laravel as jb')
-        ->select([
-            'jb.*',
-            'psl.wattage',
-            'sh.shift as shiftdtl',
-            'a.fullname as jb_operator_name',
-            'b.fullname as jb_incharge_name',
-            'c.fullname as createdBy'
-        ])
-        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+            ->select([
+                'jb.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as jb_operator_name',
+                'b.fullname as jb_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+            ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
         // 2. Safely apply conditional filters using request()->filled()
         if (request()->filled('createdBy')) {
@@ -605,13 +606,13 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('jb.jb_batchNo', request('batchNo'));
         }
-        $query->where('jb.status', '=',1);
+        $query->where('jb.status', '=', 1);
 
         $AllLists = $query->groupBy('jb.jb_id')
             ->orderByDesc('jb.created_at')
             ->get();
-    
-     
+
+
 
 
         $fileName = 'passed_ELQC_report_' . date('Ymd_His') . '.csv';
@@ -626,9 +627,9 @@ class JunctionBox_Controller extends Controller
         $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -636,9 +637,9 @@ class JunctionBox_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
+
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 //if ($row->status == '1' && $row->rwrk_status == '1'){
                 fputcsv($file, [
                     $sl,
@@ -653,7 +654,7 @@ class JunctionBox_Controller extends Controller
                     $row->jb_operator_name,
                     $row->jb_incharge_name,
                 ]);
-              //}
+                //}
             }
 
             fclose($file);
@@ -665,7 +666,7 @@ class JunctionBox_Controller extends Controller
     // public function passedExcel(Request $request)
     // {
     //     //$data['menu'] = 'elqc-setup';
-    
+
     //     $query = DB::table('tbl_factory_jb_laravel as jb')
     //     ->select([
     //         'jb.*',
@@ -705,12 +706,12 @@ class JunctionBox_Controller extends Controller
     //     }
     //     $query->where('jb.status', '=',1);
 
-        
+
     //     $AllLists = $query->groupBy('jb.jb_id')
     //         ->orderByDesc('jb.created_at')->get();
-            
+
     //     print_r($AllLists); exit;
-    
+
     //     $fileName = 'passed_ELQC_report_' . date('Ymd_His') . '.csv';
     //     $headers = [
     //         "Content-type"        => "text/csv",
@@ -719,19 +720,19 @@ class JunctionBox_Controller extends Controller
     //         "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
     //         "Expires"             => "0"
     //     ];
-    
+
     //     $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
-    
+
     //     // Create a callback to stream the data
     //     $callback = function() use($AllLists, $columns) {
     //         $file = fopen('php://output', 'w');
-            
+
     //         // Add UTF-8 BOM for Excel to recognize special characters correctly
     //         fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
-    
+
     //         // Write column headers
     //         fputcsv($file, $columns);
-    
+
     //         // Write data rows
     //         foreach ($AllLists as $key => $row) {
     //             $sl = $key + 1;
@@ -749,36 +750,36 @@ class JunctionBox_Controller extends Controller
     //                 $row->jb_incharge_name,
     //             ]);
     //         }
-    
+
     //         fclose($file);
     //     };
-    
+
     //     // Return the response as a stream
     //     return response()->stream($callback, 200, $headers);
     // }
-    
+
     public function rejectedExcel(Request $request)
     {
         // Initialize the query builder
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
-        ->selectRaw('SUM(cell_qty)')
-        ->whereColumn('d2.elqcId', 'elqc.elqc_id');
+            ->selectRaw('SUM(cell_qty)')
+            ->whereColumn('d2.elqcId', 'elqc.elqc_id');
 
-      
+
         $query = DB::table('tbl_factory_jb_laravel as jb')
-        ->select([
-            'jb.*',
-            'psl.wattage',
-            'sh.shift as shiftdtl',
-            'a.fullname as jb_operator_name',
-            'b.fullname as jb_incharge_name',
-            'c.fullname as createdBy'
-        ])
-        ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
-        ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
-        ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
-        ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
-        ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
+            ->select([
+                'jb.*',
+                'psl.wattage',
+                'sh.shift as shiftdtl',
+                'a.fullname as jb_operator_name',
+                'b.fullname as jb_incharge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'jb.jb_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'jb.jb_batchNo')
+            ->leftJoin('mstr_emp as a', 'jb.jb_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'jb.jb_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'jb.created_by', '=', 'c.id');
 
         // 2. Safely apply conditional filters using request()->filled()
         if (request()->filled('createdBy')) {
@@ -802,7 +803,7 @@ class JunctionBox_Controller extends Controller
         if (request()->filled('batchNo')) {
             $query->where('jb.jb_batchNo', request('batchNo'));
         }
-        $query->where('jb.status', '<>',1);
+        $query->where('jb.status', '<>', 1);
 
         $AllLists = $query->groupBy('jb.jb_id')
             ->orderByDesc('jb.created_at')
@@ -820,9 +821,9 @@ class JunctionBox_Controller extends Controller
         $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -830,9 +831,9 @@ class JunctionBox_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
-              //if ($row->status == '2' && $row->rwrk_status == '2'){
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
+                //if ($row->status == '2' && $row->rwrk_status == '2'){
                 fputcsv($file, [
                     $sl,
                     \Carbon\Carbon::parse($row->jb_date)->format('d/m/Y'),
@@ -846,7 +847,7 @@ class JunctionBox_Controller extends Controller
                     $row->jb_operator_name,
                     $row->jb_incharge_name,
                 ]);
-              //}
+                //}
             }
 
             fclose($file);
@@ -855,9 +856,9 @@ class JunctionBox_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    
-    
-    
+
+
+
     public function addJunctionBox()
     {
         $data['menu'] = 'junctionbox';
@@ -898,23 +899,21 @@ class JunctionBox_Controller extends Controller
         //     ->first();
 
 
-        if(isset($_GET['id'])){
-          $getBatchNo = $_GET['id'];
-          $getBarcode = request()->get('bid');
+        if (isset($_GET['id'])) {
+            $getBatchNo = $_GET['id'];
+            $getBarcode = request()->get('bid');
 
-          $data['bushingMaterial'] = DB::table('tbl_factory_production_setup_laravel as psl')
-            ->join('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-            ->join('tbl_factory_material_master_laravel as m', 'm.id', '=', 'psml.material')
-            ->select('m.title as matname', 'm.id as matid', 'psl.wattage', 'psml.size AS msize', 'psml.brand AS mbrand')
-            ->where('psl.batchNo', $getBatchNo)
-            ->get();
+            $data['bushingMaterial'] = DB::table('tbl_factory_production_setup_laravel as psl')
+                ->join('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+                ->join('tbl_factory_material_master_laravel as m', 'm.id', '=', 'psml.material')
+                ->select('m.title as matname', 'm.id as matid', 'psl.wattage', 'psml.size AS msize', 'psml.brand AS mbrand')
+                ->where('psl.batchNo', $getBatchNo)
+                ->get();
 
-          $data['bushingLogo'] = DB::table('tbl_factory_bushing_laravel')
-            ->select('bushing_logo')
-            ->where('bushing_barCode', $getBarcode)
-            ->first();
-
-          
+            $data['bushingLogo'] = DB::table('tbl_factory_bushing_laravel')
+                ->select('bushing_logo')
+                ->where('bushing_barCode', $getBarcode)
+                ->first();
         }
 
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
@@ -951,22 +950,22 @@ class JunctionBox_Controller extends Controller
         $btch_viewNo = $request->get('id');
         $action = $request->get('action') ?? '';
         $batchNo = $request->get('id') ?? '';
-        
+
         if ($action === 'view') {
             $exists = DB::table('tbl_factory_bushing_laravel')
-            ->select('bushing_logo')
-            ->where('bushing_barCode', $barcode)
-            ->where('bushing_batchNo', $btch_viewNo)
-            //->where('bushing_id', $btch_viewNo)
-            ->first();
+                ->select('bushing_logo')
+                ->where('bushing_barCode', $barcode)
+                ->where('bushing_batchNo', $btch_viewNo)
+                //->where('bushing_id', $btch_viewNo)
+                ->first();
         } else {
             $exists = DB::table('tbl_factory_bushing_laravel')
-            ->select('bushing_id' , 'bushing_logo')
-            ->where('bushing_barCode', $barcode)
-            ->where('bushing_batchNo', $batchNo)
-            ->get();
+                ->select('bushing_id', 'bushing_logo')
+                ->where('bushing_barCode', $barcode)
+                ->where('bushing_batchNo', $batchNo)
+                ->get();
         }
-            
+
         // If action is 'view', we're in view mode - skip EL QC validation
         if ($action === 'view') {
             return response()->json([
@@ -975,19 +974,19 @@ class JunctionBox_Controller extends Controller
                 'message' => 'Barcode is valid (view mode).',
             ]);
         }
-            
+
         // Check if barcode passed in 90Deg QC or Not
         $passExists = DB::table('tbl_factory_ninetydeg_laravel')
             ->where('ninetydeg_barcode', $barcode)
             ->where('ninetydeg_batchNo', $batchNo)
-            ->exists(); 
-            
+            ->exists();
+
         // Check if barcode already used in JB
         $elQcExists = DB::table('tbl_factory_jb_laravel')
             ->where('jb_barcode', $barcode)
             ->where('jb_batchNo', $batchNo)
             ->exists();
-    
+
         // If found in EL QC - INVALID
         if ($elQcExists) {
             return response()->json([
@@ -1019,88 +1018,87 @@ class JunctionBox_Controller extends Controller
     }
 
 
-    public function insert(Request $request){
+    public function insert(Request $request)
+    {
 
 
-      if ($request->input('err') == '1') {
+        if ($request->input('err') == '1') {
             return redirect()->back()->with('error', 'Please correct the errors before submitting the form.');
         } else {
 
 
             $demoId = date('YmdHis');
-            
+
             $barCode = $request->input('barCode');
-                
+
             // Check if valid serial number exists
             $bExists = DB::table('factory_serial_number_details')
-              ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
-              ->where('sl.Approve_status', 'APPROVE')
-              ->whereNull('factory_serial_number_details.status')
-              ->where('factory_serial_number_details.sl_no', $barCode)
-              ->exists();
-              
-            if ($bExists) { 
+                ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+                ->where('sl.Approve_status', 'APPROVE')
+                ->whereNull('factory_serial_number_details.status')
+                ->where('factory_serial_number_details.sl_no', $barCode)
+                ->exists();
+
+            if ($bExists) {
                 //Bushing Auto Entry
                 $exists = DB::table('tbl_factory_bushing_laravel')
-                ->where('bushing_barCode', request()->input('barCode'))
-                ->exists();
+                    ->where('bushing_barCode', request()->input('barCode'))
+                    ->exists();
                 if ($exists == false) {
                     $data = array(
-                    'bushing_id' => $demoId,
-                    'bushing_date' => date('d-m-Y'),
-                    'bushing_time' => date('H:i:s'),
-                    'bushing_operator' => request()->input('operator'),
-                    'bushing_batchNo' => request()->input('batchNo'),
-                    'bushing_incherge' => request()->input('incharge'),
-                    'bushing_shift' => request()->input('shift'),
-                    'bushing_plant' => request()->input('plant'),
-                    'bushing_logo' => 'Yes',
-                    'bushing_hasDamage' => 'No',
-                    'bushing_rfid' => request()->input('rfid'),
-                    'bushing_barCode' => request()->input('barCode'),
-                    'created_by' => request()->session()->get('empId')
+                        'bushing_id' => $demoId,
+                        'bushing_date' => date('d-m-Y'),
+                        'bushing_time' => date('H:i:s'),
+                        'bushing_operator' => request()->input('operator'),
+                        'bushing_batchNo' => request()->input('batchNo'),
+                        'bushing_incherge' => request()->input('incharge'),
+                        'bushing_shift' => request()->input('shift'),
+                        'bushing_plant' => request()->input('plant'),
+                        'bushing_logo' => 'Yes',
+                        'bushing_hasDamage' => 'No',
+                        'bushing_rfid' => request()->input('rfid'),
+                        'bushing_barCode' => request()->input('barCode'),
+                        'created_by' => request()->session()->get('empId')
                     );
-    
+
                     $res = Bushing_Model::create($data);
-    
-                    $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
-    
+
+                    $materials = ProductSetUpMaterial_Model::where('batchNo', request()->input('batchNo'))->get();
+
                     foreach ($materials as $material) {
                         $data = array(
                             'bushingId' => $demoId,
                             'prd_matId' => $material['material'],
                             'status' => 'Yes'
                         );
-    
+
                         BushingMaterial_Model::create($data);
                     }
-    
-                    
                 }
-    
+
                 //ELQC Auto Entry
-                
+
                 //REWORK
                 $exists = DB::table('tbl_factory_el_qc_laravel')
-                ->where('elqc_barcode', request()->input('barCode'))
-                ->where('status', '<>', '1')
-                ->exists();
+                    ->where('elqc_barcode', request()->input('barCode'))
+                    ->where('status', '<>', '1')
+                    ->exists();
                 if ($exists == true) {
-                    $qry = EL_QC::where('elqc_barcode',$request->input('barCode'));
+                    $qry = EL_QC::where('elqc_barcode', $request->input('barCode'));
                     $data = array(
                         'status'        => '1',
                         'rwrk_status'   => '1'
                     );
-    
+
                     $res =  $qry->update($data);
                 }
-                
+
                 //Normal
                 $exists = DB::table('tbl_factory_el_qc_laravel')
-                ->where('elqc_barcode', request()->input('barCode'))
-                ->exists();
+                    ->where('elqc_barcode', request()->input('barCode'))
+                    ->exists();
                 if ($exists == false) {
-    
+
                     $data = array(
                         'elqc_id'       => $demoId,
                         'elqc_date'     => date('d-m-Y'),
@@ -1118,41 +1116,40 @@ class JunctionBox_Controller extends Controller
                         'elqc_barcode'  => $request->input('barCode'),
                         'created_by'    => $request->session()->get('empId')
                     );
-    
+
                     $res = EL_QC::create($data);
-    
+
                     EL_QC_History::create([
                         'el_qc_id'   => $demoId,
                         'action'     => 'Raised',
                         'ip_address' => $this->getUserIP(),
                         'created_by' => $request->session()->get('empId')
                     ]);
-                    
                 }
-    
+
                 //Ninetydegree QC Auto Entry
-                
+
                 //REWORK
                 $exists = DB::table('tbl_factory_ninetydeg_laravel')
-                ->where('ninetydeg_barcode', request()->input('barCode'))
-                ->where('status', '<>', '1')
-                ->exists();
+                    ->where('ninetydeg_barcode', request()->input('barCode'))
+                    ->where('status', '<>', '1')
+                    ->exists();
                 if ($exists == true) {
-                    $qry = NinetyDeg_Model::where('ninetydeg_barcode',$request->input('barCode'));
+                    $qry = NinetyDeg_Model::where('ninetydeg_barcode', $request->input('barCode'));
                     $data = array(
                         'status'        => '1',
                         'rwrk_status'   => '1'
                     );
-    
+
                     $res =  $qry->update($data);
                 }
-                
+
                 //Normal
                 $exists = DB::table('tbl_factory_ninetydeg_laravel')
-                ->where('ninetydeg_barcode', $request->input('barCode'))
-                ->exists();
+                    ->where('ninetydeg_barcode', $request->input('barCode'))
+                    ->exists();
                 if ($exists == false) {
-                
+
                     $data = array(
                         'ninetydeg_id'          => $demoId,
                         'ninetydeg_date'        => date('d-m-Y'),
@@ -1172,42 +1169,41 @@ class JunctionBox_Controller extends Controller
                         'ninetydeg_barcode'     => $request->input('barCode'),
                         'created_by'            => $request->session()->get('empId')
                     );
-    
+
                     $res = NinetyDeg_Model::create($data);
-    
+
                     NinetyDegHist_Model::create([
                         'ninetydeg_id' => $demoId,
                         'action'       => 'Raised',
                         'ip_address'   => $this->getUserIP(),
                         'created_by'   => auth()->id()
                     ]);
-    
                 }
             }
-            
+
             // Check if valid serial number exists
             $bExists = DB::table('factory_serial_number_details')
-              ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
-              ->where('sl.Approve_status', 'APPROVE')
-              ->whereNull('factory_serial_number_details.status')
-              ->where('factory_serial_number_details.sl_no', $barCode)
-              ->exists();
-              
-            $PreExists = true; 
-            
-            if($bExists && $PreExists){
-            
+                ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+                ->where('sl.Approve_status', 'APPROVE')
+                ->whereNull('factory_serial_number_details.status')
+                ->where('factory_serial_number_details.sl_no', $barCode)
+                ->exists();
+
+            $PreExists = true;
+
+            if ($bExists && $PreExists) {
+
                 $exists = DB::table('tbl_factory_jb_laravel')
-                  ->where('jb_barcode', $request->input('barCode'))
-                  ->exists();
-                  
-                if($exists == false){
-                    
+                    ->where('jb_barcode', $request->input('barCode'))
+                    ->exists();
+
+                if ($exists == false) {
+
                     $qcId = DB::table('tbl_factory_ninetydeg_laravel')
-                  ->where('ninetydeg_barcode', $request->input('barCode'))
-                  ->where('ninetydeg_batchNo', $request->input('batchNo'))
-                  ->value('ninetydeg_id');
-        
+                        ->where('ninetydeg_barcode', $request->input('barCode'))
+                        ->where('ninetydeg_batchNo', $request->input('batchNo'))
+                        ->value('ninetydeg_id');
+
                     $id = date('YmdHis');
                     $data = array(
                         'jb_id' => $id,
@@ -1228,10 +1224,10 @@ class JunctionBox_Controller extends Controller
                         'scan_flag' => 1,
                         'created_by' => $request->session()->get('empId')
                     );
-        
-        
+
+
                     $res = JB_Model::create($data);
-                    
+
                     JB_Hist_Model::create([
                         'jb_id' => $id,
                         'action' => 'Raised',
@@ -1243,14 +1239,14 @@ class JunctionBox_Controller extends Controller
                     $brand = $request->input('brand', []);
                     $qty = $request->input('qty', []);
                     $uom = $request->input('uom', []);
-        
+
                     if ($request->input('el_type') === '0' && is_array($type) && count($type) > 0) {
                         foreach ($type as $i => $dfctType) {
                             // skip empty rows (optional)
                             if ($dfctType === null || $dfctType === '') {
                                 continue;
                             }
-        
+
                             $defectData = array(
                                 'jb_Id' => $id,
                                 'type' => $dfctType,
@@ -1259,10 +1255,56 @@ class JunctionBox_Controller extends Controller
                                 'qty' => $qty[$i] ?? null,
                                 'uom' => $uom[$i] ?? null,
                             );
-        
+
                             JB_Damage_Model::create($defectData);
                         }
                     }
+
+
+                    // RAW MATERIAL CONSUMPTION
+
+                    if ($request->input('el_type') != 1) {
+
+                        $batchNoGetBom = $request->input('batchNo');
+                        $transacCat = 'Material Consumption due to reject in Junction Box';
+
+                        $date = date('Y/m/d');
+
+                        $batchMats = DB::table('tbl_factory_production_setup_material_laravel')
+                            ->select('bomMat', 'bomQty')
+                            ->where('batchNo', '=', $batchNoGetBom) // Fixed quotes
+                            ->get();
+
+                        foreach ($batchMats as $batchMat) {
+
+                            DB::table('master_raw_material')
+                                ->where('Organization', 4)
+                                ->where('Godown_Name', 60)
+                                ->where('Material', $batchMat->bomMat)
+                                ->decrement('Quantity', $batchMat->bomQty);
+
+                            $data = array(
+                                'matrerial'         => $batchMat->bomMat,
+                                'date'              => $date,
+                                'batch'             => $batchNoGetBom,
+                                'qty'               => $batchMat->bomQty,
+                                'godown'            => 60,
+                                'organisation'      => 4,
+                                'refNo'             => $id,
+                                'transacCategory'   => $transacCat,
+                                'raisedBy'          => $request->session()->get('empId'),
+                                'ip'                => $this->getUserIP()
+                            );
+
+                            Raw_Consumption_Transac_Model::create($data);
+                        }
+                    }
+
+                    // RAW MATERIAL CONSUMPTION 
+
+
+
+
                     $lock = request()->input('lock');
                     $batchNo = request()->input('batchNo');
                     $oprtr = request()->input('operator');
@@ -1275,68 +1317,66 @@ class JunctionBox_Controller extends Controller
                             $url = 'production-lineup/junctionbox/add?page=ALL&lock=1&batchNo=' . $batchNo . '&operator=' . $oprtr . '&shift=' . $shift . '&incharge=' . $incherge . '&plant=' . $plant;
                             return redirect($url)->with('success', ' Junction Box data stored successfully!');
                         } else {
-                           //$url = ;
+                            //$url = ;
                             return redirect('production-lineup/junctionbox')->with('success', ' Junction Box data stored successfully!');
                         }
                     }
-                }else {
-                   //$url = ;
-                  return redirect('production-lineup/junctionbox')->with('success', ' Junction Box data stored faild! Duplicate Barcode');
+                } else {
+                    //$url = ;
+                    return redirect('production-lineup/junctionbox')->with('success', ' Junction Box data stored faild! Duplicate Barcode');
                 }
-            }else {
-                   //$url = ;
-              return redirect('production-lineup/junctionbox')->with('success', ' Junction Box data stored faild! This Barcode not Valid or already Used');
+            } else {
+                //$url = ;
+                return redirect('production-lineup/junctionbox')->with('success', ' Junction Box data stored faild! This Barcode not Valid or already Used');
             }
         }
     }
 
 
-    public function view_jb($id = null){
-      
+    public function view_jb($id = null)
+    {
+
         //echo 'hi'; exit;
-      $data['menu'] = 'junctionbox';
-      $data['laminatorDetails'] = DB::table('tbl_factory_jb_laravel as jb')
-          ->leftJoin('mstr_emp as emp1', 'jb.jb_operator', '=', 'emp1.id')
-          ->leftJoin('mstr_emp as emp2', 'jb.jb_incharge', '=', 'emp2.id')
-          ->leftJoin('hr_mstr_shift as sh', 'jb.jb_shift', '=', 'sh.id')
-          ->select('jb.*', 'emp1.fullname as operator_name', 'emp2.fullname as incharge_name', 'sh.shift as shift_name')
-          ->where('jb.jb_id', $id)
-          ->first();
-      $data['defectDetails'] = DB::table('tbl_factory_jb_defect_laravel as def')
-          ->select('def.*')
-          ->where('def.jb_Id', $id)
-          ->get();
-      $data['laminatorHistory'] = DB::table('tbl_factory_jb_history_laravel as history')
-          ->select('history.*', 'emp.fullname as created_by')
-          ->leftJoin('mstr_emp as emp', 'history.created_by', '=', 'emp.id')
-          ->where('history.jb_id', $id)
-          ->get();
-      $data['DmgRsn'] = DB::table('master_type_dtls')
-          ->select('master_type_dtls.*')
-          ->where('master_type_dtls.parent_id', 44)
-          ->get();
-      $data['DmgCat'] = DB::table('master_type_dtls')
-          ->select('master_type_dtls.*')
-          ->where('master_type_dtls.parent_id', 43)
-          ->get();
-      $data['DmgMachine'] = DB::table('master_type_dtls')
-          ->select('master_type_dtls.*')
-          ->where('master_type_dtls.parent_id', 47)
-          ->get();
-      $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
-      $batchNo = $data['laminatorDetails']->jb_batchNo;
-      $data['bushingMaterial'] = DB::table('tbl_factory_production_setup_laravel as psl')
-          ->select('psl.cellRow', 'psl.celColumn')
-          ->where('psl.batchNo', $batchNo)
-          ->first();
-          
+        $data['menu'] = 'junctionbox';
+        $data['laminatorDetails'] = DB::table('tbl_factory_jb_laravel as jb')
+            ->leftJoin('mstr_emp as emp1', 'jb.jb_operator', '=', 'emp1.id')
+            ->leftJoin('mstr_emp as emp2', 'jb.jb_incharge', '=', 'emp2.id')
+            ->leftJoin('hr_mstr_shift as sh', 'jb.jb_shift', '=', 'sh.id')
+            ->select('jb.*', 'emp1.fullname as operator_name', 'emp2.fullname as incharge_name', 'sh.shift as shift_name')
+            ->where('jb.jb_id', $id)
+            ->first();
+        $data['defectDetails'] = DB::table('tbl_factory_jb_defect_laravel as def')
+            ->select('def.*')
+            ->where('def.jb_Id', $id)
+            ->get();
+        $data['laminatorHistory'] = DB::table('tbl_factory_jb_history_laravel as history')
+            ->select('history.*', 'emp.fullname as created_by')
+            ->leftJoin('mstr_emp as emp', 'history.created_by', '=', 'emp.id')
+            ->where('history.jb_id', $id)
+            ->get();
+        $data['DmgRsn'] = DB::table('master_type_dtls')
+            ->select('master_type_dtls.*')
+            ->where('master_type_dtls.parent_id', 44)
+            ->get();
+        $data['DmgCat'] = DB::table('master_type_dtls')
+            ->select('master_type_dtls.*')
+            ->where('master_type_dtls.parent_id', 43)
+            ->get();
+        $data['DmgMachine'] = DB::table('master_type_dtls')
+            ->select('master_type_dtls.*')
+            ->where('master_type_dtls.parent_id', 47)
+            ->get();
+        $data['userList'] = DB::table('mstr_emp')
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
+        $batchNo = $data['laminatorDetails']->jb_batchNo;
+        $data['bushingMaterial'] = DB::table('tbl_factory_production_setup_laravel as psl')
+            ->select('psl.cellRow', 'psl.celColumn')
+            ->where('psl.batchNo', $batchNo)
+            ->first();
+
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.junctionbox.view_jb', $data);
-    
     }
-
-
 }

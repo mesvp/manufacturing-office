@@ -8,24 +8,25 @@ use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductionLineUp\{EL_QC, EL_QC_Defect, EL_QC_RWRK, EL_QC_Defect_RWRK, EL_QC_History};
 use App\Models\ProductionLineUp\{Bushing_Model, BushingMaterial_Model, BushingDamageMaterial_Model};
-use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model};
+use App\Models\ProductionLineUp\{ProductSetUpMaterial_Model, Raw_Consumption_Transac_Model};
 
 class ElQC_Controller extends Controller
 {
-    
-    public  static function PermittedMenuList($sessionId){
-          //Menu Permission
-          $res = DB::table('prod_menu_laravel')
-          ->leftJoin('prod_menu_acc_laravel', 'prod_menu_laravel.id', '=', 'prod_menu_acc_laravel.menu_id')
-          ->where('prod_menu_acc_laravel.emp_id', '=', $sessionId)
-          ->where('prod_menu_acc_laravel.accessType', '=', 'yes')
-          ->select('prod_menu_laravel.*', 'prod_menu_acc_laravel.accessType')
-          ->get();
-          
-          return $res;
+
+    public  static function PermittedMenuList($sessionId)
+    {
+        //Menu Permission
+        $res = DB::table('prod_menu_laravel')
+            ->leftJoin('prod_menu_acc_laravel', 'prod_menu_laravel.id', '=', 'prod_menu_acc_laravel.menu_id')
+            ->where('prod_menu_acc_laravel.emp_id', '=', $sessionId)
+            ->where('prod_menu_acc_laravel.accessType', '=', 'yes')
+            ->select('prod_menu_laravel.*', 'prod_menu_acc_laravel.accessType')
+            ->get();
+
+        return $res;
     }
-  
-  
+
+
     public function getUserIP()
     {
         // Get real visitor IP behind CloudFlare network
@@ -54,47 +55,50 @@ class ElQC_Controller extends Controller
         $data['menu'] = 'elqc-setup';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
 
         // Initialize the query builder
         $query = DB::table('tbl_factory_bushing_laravel as bol')
-          ->select([
-              'bol.*',
-              'elqc.elqc_id', 'elqc.rwrk_status', 'elqc.status', 'elqc.elqc_source',
-              'psl.wattage',
-              'psml.size as cellSize',
-              'sh.shift as shiftdtl',
-              'a.fullname as bushing_operator_name',
-              'b.fullname as bushing_incherge_name',
-              'c.fullname as createdBy'
-          ])
-          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-          ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-          ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
+            ->select([
+                'bol.*',
+                'elqc.elqc_id',
+                'elqc.rwrk_status',
+                'elqc.status',
+                'elqc.elqc_source',
+                'psl.wattage',
+                'psml.size as cellSize',
+                'sh.shift as shiftdtl',
+                'a.fullname as bushing_operator_name',
+                'b.fullname as bushing_incherge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
+            ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+            ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
 
         // Apply Initial Base Conditions
         $query->where(function ($q) {
             $q->whereNull('elqc.elqc_bushingNo')
-              ->orWhere(function ($sub) {
-                  $sub->where('elqc.rwrk_status', '')
-                      ->where('elqc.status', '0');
-              });
+                ->orWhere(function ($sub) {
+                    $sub->where('elqc.rwrk_status', '')
+                        ->where('elqc.status', '0');
+                });
         })->where('bol.bushing_hasDamage', 'No');
 
         // Apply Dynamic Filters from Request
@@ -123,36 +127,36 @@ class ElQC_Controller extends Controller
         // Group, Order, and Paginate
         $data['AllLists'] = $query->groupBy('bol.bushing_id')
             ->orderBy('bol.created_at', 'DESC')
-            ->paginate(15); 
+            ->paginate(15);
 
-        
+
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.ElQC.index', $data);
-    }   
+    }
     public function elqcPassed(Request $request)
     {
         $data['menu'] = 'elqc-setup';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-    
+
         // 1. Create a joined subquery for cell damage to avoid row-by-row selection
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel')
             ->select('elqcId', DB::raw('SUM(cell_qty) as total_damage'))
             ->groupBy('elqcId');
-    
+
         // 2. Build the main query
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
             ->select([
@@ -177,7 +181,7 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
-    
+
         // 3. Optimized Logical Filters
         // $query->where(function ($q) {
         //     $q->whereNull('elqc.elqc_bushingNo')
@@ -186,7 +190,7 @@ class ElQC_Controller extends Controller
         //               ->where('elqc.status', '0');
         //       });
         // })->where('bol.bushing_hasDamage', 'No');
-    
+
         // 4. Dynamic Filters
         $filters = [
             'created_by' => 'createdBy',
@@ -195,13 +199,13 @@ class ElQC_Controller extends Controller
             'elqc_shift' => 'shift',
             'elqc_batchNo' => 'batchNo'
         ];
-    
+
         foreach ($filters as $column => $input) {
             if ($request->filled($input)) {
                 $query->where("elqc.$column", $request->input($input));
             }
         }
-    
+
         if ($request->filled('fromDate')) {
             $query->whereDate('elqc.created_at', '>=', $request->fromDate);
         }
@@ -209,13 +213,13 @@ class ElQC_Controller extends Controller
             $query->whereDate('elqc.created_at', '<=', $request->toDate);
         }
         $query->where('elqc.status', '=', '1');
-        
+
         //dd($query);
         // 5. Final Execution
         $data['AllELQCLists'] = $query->orderBy('elqc.created_at', 'DESC')
-        ->groupBy('elqc.elqc_id')
+            ->groupBy('elqc.elqc_id')
             ->paginate(15);
-            
+
         $data['PermittedMenuList'] = self::PermittedMenuList(session('empId'));
         return view('ProductionLineUp.ElQC.elqc-passed', $data);
     }
@@ -224,25 +228,25 @@ class ElQC_Controller extends Controller
         $data['menu'] = 'elqc-setup';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-    
+
         // 1. Create a joined subquery for cell damage to avoid row-by-row selection
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel')
             ->select('elqcId', DB::raw('SUM(cell_qty) as total_damage'))
             ->groupBy('elqcId');
-    
+
         // 2. Build the main query
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
             ->select([
@@ -267,7 +271,7 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
-    
+
         // 3. Optimized Logical Filters
         // $query->where(function ($q) {
         //     $q->whereNull('elqc.elqc_bushingNo')
@@ -276,7 +280,7 @@ class ElQC_Controller extends Controller
         //               ->where('elqc.status', '0');
         //       });
         // })->where('bol.bushing_hasDamage', 'No');
-    
+
         // 4. Dynamic Filters
         $filters = [
             'created_by' => 'createdBy',
@@ -285,13 +289,13 @@ class ElQC_Controller extends Controller
             'elqc_shift' => 'shift',
             'elqc_batchNo' => 'batchNo'
         ];
-    
+
         foreach ($filters as $column => $input) {
             if ($request->filled($input)) {
                 $query->where("elqc.$column", $request->input($input));
             }
         }
-    
+
         if ($request->filled('fromDate')) {
             $query->whereDate('elqc.created_at', '>=', $request->fromDate);
         }
@@ -299,12 +303,12 @@ class ElQC_Controller extends Controller
             $query->whereDate('elqc.created_at', '<=', $request->toDate);
         }
         $query->where('elqc.status', '=', 2);
-    
+
         // 5. Final Execution
         $data['AllELQCLists'] = $query->orderBy('elqc.created_at', 'DESC')
-        ->groupBy('elqc.elqc_id')
+            ->groupBy('elqc.elqc_id')
             ->paginate(15);
-            
+
         $data['PermittedMenuList'] = self::PermittedMenuList(session('empId'));
         return view('ProductionLineUp.ElQC.elqc-rejected', $data);
     }
@@ -314,47 +318,50 @@ class ElQC_Controller extends Controller
         $data['menu'] = 'elqc-all';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
 
         // Initialize the query builder
         $query = DB::table('tbl_factory_bushing_laravel as bol')
-          ->select([
-              'bol.*',
-              'elqc.elqc_id', 'elqc.rwrk_status', 'elqc.status', 'elqc.elqc_source',
-              'psl.wattage',
-              'psml.size as cellSize',
-              'sh.shift as shiftdtl',
-              'a.fullname as bushing_operator_name',
-              'b.fullname as bushing_incherge_name',
-              'c.fullname as createdBy'
-          ])
-          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-          ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-          ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
+            ->select([
+                'bol.*',
+                'elqc.elqc_id',
+                'elqc.rwrk_status',
+                'elqc.status',
+                'elqc.elqc_source',
+                'psl.wattage',
+                'psml.size as cellSize',
+                'sh.shift as shiftdtl',
+                'a.fullname as bushing_operator_name',
+                'b.fullname as bushing_incherge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
+            ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+            ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
 
         // Apply Initial Base Conditions
         $query->where(function ($q) {
             $q->whereNull('elqc.elqc_bushingNo')
-              ->orWhere(function ($sub) {
-                  $sub->where('elqc.rwrk_status', '')
-                      ->where('elqc.status', '0');
-              });
+                ->orWhere(function ($sub) {
+                    $sub->where('elqc.rwrk_status', '')
+                        ->where('elqc.status', '0');
+                });
         })->where('bol.bushing_hasDamage', 'No');
 
         // Apply Dynamic Filters from Request
@@ -383,36 +390,36 @@ class ElQC_Controller extends Controller
         // Group, Order, and Paginate
         $data['AllLists'] = $query->groupBy('bol.bushing_id')
             ->orderBy('bol.created_at', 'DESC')
-            ->paginate(15); 
+            ->paginate(15);
 
-        
+
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.ElQC.elqc-all', $data);
-    }   
+    }
     public function elqcAllPassed(Request $request)
     {
         $data['menu'] = 'elqc-all';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-    
+
         // 1. Create a joined subquery for cell damage to avoid row-by-row selection
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel')
             ->select('elqcId', DB::raw('SUM(cell_qty) as total_damage'))
             ->groupBy('elqcId');
-    
+
         // 2. Build the main query
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
             ->select([
@@ -437,7 +444,7 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
-    
+
         // 3. Optimized Logical Filters
         // $query->where(function ($q) {
         //     $q->whereNull('elqc.elqc_bushingNo')
@@ -446,7 +453,7 @@ class ElQC_Controller extends Controller
         //               ->where('elqc.status', '0');
         //       });
         // })->where('bol.bushing_hasDamage', 'No');
-    
+
         // 4. Dynamic Filters
         $filters = [
             'created_by' => 'createdBy',
@@ -455,27 +462,27 @@ class ElQC_Controller extends Controller
             'elqc_shift' => 'shift',
             'elqc_batchNo' => 'batchNo'
         ];
-    
+
         foreach ($filters as $column => $input) {
             if ($request->filled($input)) {
                 $query->where("elqc.$column", $request->input($input));
             }
         }
-    
+
         if ($request->filled('fromDate')) {
-          $query->whereDate('elqc.created_at', '>=', $request->fromDate);
+            $query->whereDate('elqc.created_at', '>=', $request->fromDate);
         }
         if ($request->filled('toDate')) {
-          $query->whereDate('elqc.created_at', '<=', $request->toDate);
+            $query->whereDate('elqc.created_at', '<=', $request->toDate);
         }
         $query->where('elqc.status', '=', '1');
-        
+
         //dd($query);
         // 5. Final Execution
         $data['AllELQCLists'] = $query->orderBy('elqc.created_at', 'DESC')
             ->groupBy('elqc.elqc_id')
             ->paginate(15);
-            
+
         $data['PermittedMenuList'] = self::PermittedMenuList(session('empId'));
         return view('ProductionLineUp.ElQC.elqc-all-passed', $data);
     }
@@ -484,25 +491,25 @@ class ElQC_Controller extends Controller
         $data['menu'] = 'elqc-all';
 
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')
-          ->select('hr_mstr_shift.*')
-          ->get();
+            ->select('hr_mstr_shift.*')
+            ->get();
 
         $data['userList'] = DB::table('mstr_emp')
-          ->select('mstr_emp.id', 'mstr_emp.fullname')
-          ->where('mstr_emp.status', '1')
-          ->get();
+            ->select('mstr_emp.id', 'mstr_emp.fullname')
+            ->where('mstr_emp.status', '1')
+            ->get();
 
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
-          ->select('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
-          ->get();
+            ->select('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->groupBy('tbl_factory_bushing_laravel.bushing_batchNo')
+            ->get();
 
-    
+
         // 1. Create a joined subquery for cell damage to avoid row-by-row selection
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel')
             ->select('elqcId', DB::raw('SUM(cell_qty) as total_damage'))
             ->groupBy('elqcId');
-    
+
         // 2. Build the main query
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
             ->select([
@@ -527,7 +534,7 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
-    
+
         // 3. Optimized Logical Filters
         // $query->where(function ($q) {
         //     $q->whereNull('elqc.elqc_bushingNo')
@@ -536,7 +543,7 @@ class ElQC_Controller extends Controller
         //               ->where('elqc.status', '0');
         //       });
         // })->where('bol.bushing_hasDamage', 'No');
-    
+
         // 4. Dynamic Filters
         $filters = [
             'created_by' => 'createdBy',
@@ -545,13 +552,13 @@ class ElQC_Controller extends Controller
             'elqc_shift' => 'shift',
             'elqc_batchNo' => 'batchNo'
         ];
-    
+
         foreach ($filters as $column => $input) {
             if ($request->filled($input)) {
                 $query->where("elqc.$column", $request->input($input));
             }
         }
-    
+
         if ($request->filled('fromDate')) {
             $query->whereDate('elqc.created_at', '>=', $request->fromDate);
         }
@@ -559,12 +566,12 @@ class ElQC_Controller extends Controller
             $query->whereDate('elqc.created_at', '<=', $request->toDate);
         }
         $query->where('elqc.status', '=', 2);
-    
+
         // 5. Final Execution
         $data['AllELQCLists'] = $query->orderBy('elqc.created_at', 'DESC')
-        ->groupBy('elqc.elqc_id')
+            ->groupBy('elqc.elqc_id')
             ->paginate(15);
-            
+
         $data['PermittedMenuList'] = self::PermittedMenuList(session('empId'));
         return view('ProductionLineUp.ElQC.elqc-all-rejected', $data);
     }
@@ -576,31 +583,34 @@ class ElQC_Controller extends Controller
 
         // Initialize the query builder
         $query = DB::table('tbl_factory_bushing_laravel as bol')
-          ->select([
-              'bol.*',
-              'elqc.elqc_id', 'elqc.rwrk_status', 'elqc.status', 'elqc.elqc_source',
-              'psl.wattage',
-              'psml.size as cellSize',
-              'sh.shift as shiftdtl',
-              'a.fullname as bushing_operator_name',
-              'b.fullname as bushing_incherge_name',
-              'c.fullname as createdBy'
-          ])
-          ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-          ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-          ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
+            ->select([
+                'bol.*',
+                'elqc.elqc_id',
+                'elqc.rwrk_status',
+                'elqc.status',
+                'elqc.elqc_source',
+                'psl.wattage',
+                'psml.size as cellSize',
+                'sh.shift as shiftdtl',
+                'a.fullname as bushing_operator_name',
+                'b.fullname as bushing_incherge_name',
+                'c.fullname as createdBy'
+            ])
+            ->leftJoin('tbl_factory_el_qc_laravel as elqc', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'bol.bushing_shift')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
+            ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+            ->leftJoin('mstr_emp as a', 'bol.bushing_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'bol.bushing_incherge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'bol.created_by', '=', 'c.id');
 
         // Apply Initial Base Conditions
         $query->where(function ($q) {
             $q->whereNull('elqc.elqc_bushingNo')
-              ->orWhere(function ($sub) {
-                  $sub->where('elqc.rwrk_status', '')
-                      ->where('elqc.status', '0');
-              });
+                ->orWhere(function ($sub) {
+                    $sub->where('elqc.rwrk_status', '')
+                        ->where('elqc.status', '0');
+                });
         })->where('bol.bushing_hasDamage', 'No');
 
         // Apply Dynamic Filters from Request
@@ -644,9 +654,9 @@ class ElQC_Controller extends Controller
         $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -654,8 +664,8 @@ class ElQC_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 fputcsv($file, [
                     $sl,
                     \Carbon\Carbon::parse($row->bushing_date)->format('d/m/Y'),
@@ -677,71 +687,71 @@ class ElQC_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    
+
 
     public function passedExcel(Request $request)
     {
         $data['menu'] = 'elqc-setup';
 
         // Initialize the query builder
-      $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
-      ->selectRaw('SUM(cell_qty)')
-      ->whereColumn('d2.elqcId', 'elqc.elqc_id');
+        $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
+            ->selectRaw('SUM(cell_qty)')
+            ->whereColumn('d2.elqcId', 'elqc.elqc_id');
 
-      // 2. Build the main query
-      $query = DB::table('tbl_factory_el_qc_laravel as elqc')
-          ->select([
-              'elqc.*',
-              'psl.wattage',
-              'psml.size as cellSize',
-              'bol.bushing_id',
-              'sh.shift as shiftdtl',
-              'a.fullname as elqc_operator_name', // Avoid alias collision with original column
-              'b.fullname as elqc_incharge_name',
-              'c.fullname as createdByName',
-          ])
-          ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-          ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-          ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-          ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
+        // 2. Build the main query
+        $query = DB::table('tbl_factory_el_qc_laravel as elqc')
+            ->select([
+                'elqc.*',
+                'psl.wattage',
+                'psml.size as cellSize',
+                'bol.bushing_id',
+                'sh.shift as shiftdtl',
+                'a.fullname as elqc_operator_name', // Avoid alias collision with original column
+                'b.fullname as elqc_incharge_name',
+                'c.fullname as createdByName',
+            ])
+            ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
+            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
+            ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+            ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
 
 
-      // 4. Apply Dynamic Filters (Using $request instead of $_GET)
-      if ($request->filled('createdBy')) {
-          $query->where('elqc.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('elqc.elqc_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('elqc.elqc_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('elqc.elqc_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('elqc.created_at', '>=', $request->fromDate);
-        }else{
-          $query->whereDate('elqc.created_at', '>=', date('Y-m-d', strtotime('-15 days')) );
+        // 4. Apply Dynamic Filters (Using $request instead of $_GET)
+        if ($request->filled('createdBy')) {
+            $query->where('elqc.created_by', $request->createdBy);
         }
-        
+        if ($request->filled('operator')) {
+            $query->where('elqc.elqc_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('elqc.elqc_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('elqc.elqc_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('elqc.created_at', '>=', $request->fromDate);
+        } else {
+            $query->whereDate('elqc.created_at', '>=', date('Y-m-d', strtotime('-15 days')));
+        }
+
         if ($request->filled('toDate')) {
-          $query->whereDate('elqc.created_at', '<=', $request->toDate);
-        }else{
-          $query->whereDate('elqc.created_at', '<=', date('Y-m-d') );    
+            $query->whereDate('elqc.created_at', '<=', $request->toDate);
+        } else {
+            $query->whereDate('elqc.created_at', '<=', date('Y-m-d'));
         }
-      if ($request->filled('batchNo')) {
-          $query->where('elqc.elqc_batchNo', $request->batchNo);
-      }
-      $query->where('elqc.status', '=', 1);
+        if ($request->filled('batchNo')) {
+            $query->where('elqc.elqc_batchNo', $request->batchNo);
+        }
+        $query->where('elqc.status', '=', 1);
 
-      // 5. Final Execution with Pagination
-      $AllLists = $query->groupBy('elqc.elqc_id')
-          ->orderBy('elqc.created_at', 'DESC')
+        // 5. Final Execution with Pagination
+        $AllLists = $query->groupBy('elqc.elqc_id')
+            ->orderBy('elqc.created_at', 'DESC')
             ->get();
 
 
@@ -757,9 +767,9 @@ class ElQC_Controller extends Controller
         $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -767,9 +777,9 @@ class ElQC_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
+
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 //if ($row->status == '1' && $row->rwrk_status == '1'){
                 fputcsv($file, [
                     $sl,
@@ -784,7 +794,7 @@ class ElQC_Controller extends Controller
                     $row->elqc_operator_name,
                     $row->elqc_incharge_name,
                 ]);
-              //}
+                //}
             }
 
             fclose($file);
@@ -793,7 +803,7 @@ class ElQC_Controller extends Controller
         // 5. Return the response as a stream
         return response()->stream($callback, 200, $headers);
     }
-    
+
 
     public function rejectedExcel(Request $request)
     {
@@ -801,55 +811,55 @@ class ElQC_Controller extends Controller
 
         // Initialize the query builder
         $damageSubquery = DB::table('tbl_factory_el_qc_defect_laravel as d2')
-      ->selectRaw('SUM(cell_qty)')
-      ->whereColumn('d2.elqcId', 'elqc.elqc_id');
+            ->selectRaw('SUM(cell_qty)')
+            ->whereColumn('d2.elqcId', 'elqc.elqc_id');
 
-      // 2. Build the main query
-      $query = DB::table('tbl_factory_el_qc_laravel as elqc')
-          ->select([
-              'elqc.*',
-              'psl.wattage',
-              'psml.size as cellSize',
-              'bol.bushing_id',
-              'sh.shift as shiftdtl',
-              'a.fullname as elqc_operator_name', // Avoid alias collision with original column
-              'b.fullname as elqc_incharge_name',
-              'c.fullname as createdByName',
-          ])
-          ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
-          ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-          ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
-          ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
-          ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-          ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
-          ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
-          ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
+        // 2. Build the main query
+        $query = DB::table('tbl_factory_el_qc_laravel as elqc')
+            ->select([
+                'elqc.*',
+                'psl.wattage',
+                'psml.size as cellSize',
+                'bol.bushing_id',
+                'sh.shift as shiftdtl',
+                'a.fullname as elqc_operator_name', // Avoid alias collision with original column
+                'b.fullname as elqc_incharge_name',
+                'c.fullname as createdByName',
+            ])
+            ->selectSub($damageSubquery, 'no_of_cell_damage') // Injects the subquery
+            ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
+            ->join('tbl_factory_bushing_laravel as bol', 'bol.bushing_barCode', '=', 'elqc.elqc_barcode')
+            ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'bol.bushing_batchNo')
+            ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
+            ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
+            ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
+            ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id');
 
-      
 
-      // 4. Apply Dynamic Filters (Using $request instead of $_GET)
-      if ($request->filled('createdBy')) {
-          $query->where('elqc.created_by', $request->createdBy);
-      }
-      if ($request->filled('operator')) {
-          $query->where('elqc.elqc_operator', $request->operator);
-      }
-      if ($request->filled('checker')) {
-          $query->where('elqc.elqc_incharge', $request->checker);
-      }
-      if ($request->filled('shift')) {
-          $query->where('elqc.elqc_shift', $request->shift);
-      }
-      if ($request->filled('fromDate')) {
-          $query->whereDate('elqc.created_at', '>=', $request->fromDate);
-        }else{
-        $query->whereDate('elqc.created_at', '>=', date('Y-m-d', strtotime('-15 days')) );
+
+        // 4. Apply Dynamic Filters (Using $request instead of $_GET)
+        if ($request->filled('createdBy')) {
+            $query->where('elqc.created_by', $request->createdBy);
         }
-        
+        if ($request->filled('operator')) {
+            $query->where('elqc.elqc_operator', $request->operator);
+        }
+        if ($request->filled('checker')) {
+            $query->where('elqc.elqc_incharge', $request->checker);
+        }
+        if ($request->filled('shift')) {
+            $query->where('elqc.elqc_shift', $request->shift);
+        }
+        if ($request->filled('fromDate')) {
+            $query->whereDate('elqc.created_at', '>=', $request->fromDate);
+        } else {
+            $query->whereDate('elqc.created_at', '>=', date('Y-m-d', strtotime('-15 days')));
+        }
+
         if ($request->filled('toDate')) {
-        $query->whereDate('elqc.created_at', '<=', $request->toDate);
-        }else{
-        $query->whereDate('elqc.created_at', '<=', date('Y-m-d') );    
+            $query->whereDate('elqc.created_at', '<=', $request->toDate);
+        } else {
+            $query->whereDate('elqc.created_at', '<=', date('Y-m-d'));
         }
         if ($request->filled('batchNo')) {
             $query->where('elqc.elqc_batchNo', $request->batchNo);
@@ -859,59 +869,59 @@ class ElQC_Controller extends Controller
         // 5. Final Execution with Pagination
         $AllLists = $query->groupBy('elqc.elqc_id')
             ->orderBy('elqc.created_at', 'DESC')
-                ->get();
+            ->get();
 
 
-            $fileName = 'rejected_ELQC_report_' . date('Ymd_His') . '.csv';
-            $headers = [
-                "Content-type"        => "text/csv",
-                "Content-Disposition" => "attachment; filename=$fileName",
-                "Pragma"              => "no-cache",
-                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-                "Expires"             => "0"
-            ];
+        $fileName = 'rejected_ELQC_report_' . date('Ymd_His') . '.csv';
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
 
-            $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
+        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Operator', 'Incharge'];
 
-            // 4. Create a callback to stream the data
-            $callback = function() use($AllLists, $columns) {
-                $file = fopen('php://output', 'w');
-                
-                // Add UTF-8 BOM for Excel to recognize special characters correctly
-                fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+        // 4. Create a callback to stream the data
+        $callback = function () use ($AllLists, $columns) {
+            $file = fopen('php://output', 'w');
 
-                // Write column headers
-                fputcsv($file, $columns);
+            // Add UTF-8 BOM for Excel to recognize special characters correctly
+            fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
-                // Write data rows
-                foreach ($AllLists as $key=>$row) {
-                $sl = $key+1;
+            // Write column headers
+            fputcsv($file, $columns);
+
+            // Write data rows
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 //if ($row->status == '2' && $row->rwrk_status == '2'){
-                    fputcsv($file, [
-                        $sl,
-                        \Carbon\Carbon::parse($row->elqc_date)->format('d/m/Y'),
-                        \Carbon\Carbon::parse($row->elqc_time)->format('h:i A'),
-                        $row->shiftdtl,
-                        $row->elqc_barcode,
-                        $row->elqc_source ?? 'Layout',
-                        $row->wattage,
-                        $row->cellSize,
-                        $row->bus_bar ?? '-',
-                        $row->elqc_operator_name,
-                        $row->elqc_incharge_name,
-                    ]);
+                fputcsv($file, [
+                    $sl,
+                    \Carbon\Carbon::parse($row->elqc_date)->format('d/m/Y'),
+                    \Carbon\Carbon::parse($row->elqc_time)->format('h:i A'),
+                    $row->shiftdtl,
+                    $row->elqc_barcode,
+                    $row->elqc_source ?? 'Layout',
+                    $row->wattage,
+                    $row->cellSize,
+                    $row->bus_bar ?? '-',
+                    $row->elqc_operator_name,
+                    $row->elqc_incharge_name,
+                ]);
                 //}
-                }
+            }
 
-                fclose($file);
-            };
+            fclose($file);
+        };
 
-            // 5. Return the response as a stream
-            return response()->stream($callback, 200, $headers);
+        // 5. Return the response as a stream
+        return response()->stream($callback, 200, $headers);
     }
-        
 
-    
+
+
     public function add_el_qc()
     {
         $data['menu'] = 'elqc-setup';
@@ -951,7 +961,7 @@ class ElQC_Controller extends Controller
             ->select('psl.cellRow', 'psl.celColumn')
             ->where('psl.batchNo', $batchNo)
             ->first();
-        
+
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.ElQC.add_el_qc', $data);
     }
@@ -993,7 +1003,7 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as emp', 'history.created_by', '=', 'emp.id')
             ->where('history.el_qc_id', $id)
             ->get();
-            
+
         $data['bushingMaterial'] = DB::table('tbl_factory_production_setup_laravel as psl')
             ->select('psl.cellRow', 'psl.celColumn')
             ->where('psl.batchNo', $data['elqcDetails']->elqc_batchNo)
@@ -1003,72 +1013,70 @@ class ElQC_Controller extends Controller
         return view('ProductionLineUp.ElQC.el_qc_view', $data);
     }
 
-    
-    
+
+
     public function store_el_qc(Request $request)
     {
         $demoId = date('YmdHis');
-        
+
         $barCode = $request->input('barCode');
-                
+
         // Check if valid serial number exists
         $bExists = DB::table('factory_serial_number_details')
-          ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
-          ->where('sl.Approve_status', 'APPROVE')
-          ->whereNull('factory_serial_number_details.status')
-          ->where('factory_serial_number_details.sl_no', $barCode)
-          ->exists();
-          
-          
+            ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+            ->where('sl.Approve_status', 'APPROVE')
+            ->whereNull('factory_serial_number_details.status')
+            ->where('factory_serial_number_details.sl_no', $barCode)
+            ->exists();
+
+
         if ($bExists) {
 
             //Bushing Auto Entry
             $exists = DB::table('tbl_factory_bushing_laravel')
-            ->where('bushing_barCode', request()->input('barCode'))
-            ->exists();
+                ->where('bushing_barCode', request()->input('barCode'))
+                ->exists();
             if ($exists == false) {
                 $data = array(
-                'bushing_id' => $demoId,
-                'bushing_date' => date('d-m-Y'),
-                'bushing_time' => date('H:i:s'),
-                'bushing_operator' => request()->input('operator'),
-                'bushing_batchNo' => request()->input('batchNo'),
-                'bushing_incherge' => request()->input('incharge'),
-                'bushing_shift' => request()->input('shift'),
-                'bushing_plant' => request()->input('plant'),
-                'bushing_logo' => 'Yes',
-                'bushing_hasDamage' => 'No',
-                'bushing_rfid' => request()->input('rfid'),
-                'bushing_barCode' => request()->input('barCode'),
-                'created_by' => request()->session()->get('empId')
+                    'bushing_id' => $demoId,
+                    'bushing_date' => date('d-m-Y'),
+                    'bushing_time' => date('H:i:s'),
+                    'bushing_operator' => request()->input('operator'),
+                    'bushing_batchNo' => request()->input('batchNo'),
+                    'bushing_incherge' => request()->input('incharge'),
+                    'bushing_shift' => request()->input('shift'),
+                    'bushing_plant' => request()->input('plant'),
+                    'bushing_logo' => 'Yes',
+                    'bushing_hasDamage' => 'No',
+                    'bushing_rfid' => request()->input('rfid'),
+                    'bushing_barCode' => request()->input('barCode'),
+                    'created_by' => request()->session()->get('empId')
                 );
-    
+
                 $res = Bushing_Model::create($data);
-    
-                $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
-    
+
+                $materials = ProductSetUpMaterial_Model::where('batchNo', request()->input('batchNo'))->get();
+
                 foreach ($materials as $material) {
                     $data = array(
                         'bushingId' => $demoId,
                         'prd_matId' => $material['material'],
                         'status' => 'Yes'
                     );
-    
+
                     BushingMaterial_Model::create($data);
                 }
-    
-                
             }
         }
 
 
         // Check if valid serial number exists
         $bExists = DB::table('factory_serial_number_details')
-          ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
-          ->where('sl.Approve_status', 'APPROVE')
-          ->whereNull('factory_serial_number_details.status')
-          ->where('factory_serial_number_details.sl_no', $barCode)
-          ->exists();
+            ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+            ->where('sl.Approve_status', 'APPROVE')
+            ->whereNull('factory_serial_number_details.status')
+            ->where('factory_serial_number_details.sl_no', $barCode)
+            ->exists();
 
         if ($bExists == true) {
             $exists = DB::table('tbl_factory_el_qc_laravel')
@@ -1142,6 +1150,49 @@ class ElQC_Controller extends Controller
                         ]);
                     }
                 }
+
+
+                // RAW MATERIAL CONSUMPTION
+
+                if ($request->input('el_type') != 1) {
+
+                    $batchNoGetBom = $request->input('batchNo');
+                    $transacCat = 'Material Consumption due to reject in EL QC';
+
+                    $date = date('Y/m/d');
+
+                    $batchMats = DB::table('tbl_factory_production_setup_material_laravel')
+                        ->select('bomMat', 'bomQty')
+                        ->where('batchNo', '=', $batchNoGetBom) // Fixed quotes
+                        ->get();
+
+                    foreach ($batchMats as $batchMat) {
+
+                        DB::table('master_raw_material')
+                            ->where('Organization', 4)
+                            ->where('Godown_Name', 60)
+                            ->where('Material', $batchMat->bomMat)
+                            ->decrement('Quantity', $batchMat->bomQty);
+
+                        $data = array(
+                            'matrerial'         => $batchMat->bomMat,
+                            'date'              => $date,
+                            'batch'             => $batchNoGetBom,
+                            'qty'               => $batchMat->bomQty,
+                            'godown'            => 60,
+                            'organisation'      => 4,
+                            'refNo'             => $id,
+                            'transacCategory'   => $transacCat,
+                            'raisedBy'          => $request->session()->get('empId'),
+                            'ip'                => $this->getUserIP()
+                        );
+
+                        Raw_Consumption_Transac_Model::create($data);
+                    }
+                }
+
+                // RAW MATERIAL CONSUMPTION 
+
 
                 $lock     = request()->input('lock');
                 $batchNo  = request()->input('batchNo');
@@ -1258,8 +1309,8 @@ class ElQC_Controller extends Controller
             return redirect('production-lineup/el_qc')->with('success', 'El QC data store failed! This Barcode not Valid or already Used.');
         }
     }
-    
-    
+
+
     public function getBushingMaterial(Request $request)
     {
         $batchno = $request->input('q');
@@ -1307,7 +1358,7 @@ class ElQC_Controller extends Controller
         return response()->json(['exists' => $exists]);
     }
 
-    
+
     public function validateBarCode(Request $request)
     {
         // dd($request->all());
@@ -1343,9 +1394,9 @@ class ElQC_Controller extends Controller
         // Check if barcode already used in EL QC
         $elQcExists = DB::table('tbl_factory_el_qc_laravel')
             ->where('elqc_barcode', $barcode)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('status', '!=', 0)
-                      ->orWhere('rwrk_status', '!=', '');
+                    ->orWhere('rwrk_status', '!=', '');
             })
             ->exists();
 
@@ -1373,24 +1424,24 @@ class ElQC_Controller extends Controller
         return response()->json(['exists' => $exists]);
     }
 
-    
+
     public function el_qc_rework(Request $request)
     {
         $data['menu'] = 'elqc-rework';
-    
+
         // 1. Optimize lookup queries using pluck or selecting only necessary columns
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')->get(['id', 'shift']); // Adjust columns as needed
-    
+
         $data['userList'] = DB::table('mstr_emp')
             ->select('id', 'fullname')
             ->where('status', '1')
             ->get();
-    
+
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')
             ->select('bushing_batchNo')
             ->distinct() // Faster than groupBy for single column lookups
             ->get();
-    
+
         // 2. Base Query Formulation
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
             ->select([
@@ -1409,10 +1460,12 @@ class ElQC_Controller extends Controller
                     ->select('elqcId', DB::raw('SUM(cell_qty) as total_cell_damage'))
                     ->groupBy('elqcId'),
                 'defect_sum',
-                'defect_sum.elqcId', '=', 'elqc.elqc_id'
+                'defect_sum.elqcId',
+                '=',
+                'elqc.elqc_id'
             )
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
-            
+
             /* 
                CRITICAL FIX: 
                Instead of joining the massive 'tbl_factory_bushing_laravel' table directly 
@@ -1422,14 +1475,14 @@ class ElQC_Controller extends Controller
             */
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
             ->leftJoin('tbl_factory_production_setup_material_laravel as psml', 'psml.batchNo', '=', 'psl.batchNo')
-            
+
             ->leftJoin('mstr_emp as a', 'elqc.elqc_operator', '=', 'a.id')
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id')
             ->where('elqc.status', '0')
             // ->where('elqc.rwrk_status', '1')
             ->orderBy('elqc.created_at', 'DESC');
-    
+
         // Apply Dynamic Filters
         if ($request->filled('createdBy')) {
             $query->where('elqc.created_by', $request->createdBy);
@@ -1452,10 +1505,10 @@ class ElQC_Controller extends Controller
         if ($request->filled('batchNo')) {
             $query->where('elqc.elqc_batchNo', $request->batchNo);
         }
-    
+
         // Paginate results efficiently
         $data['AllELQCReworkLists'] = $query->groupBy('elqc.elqc_id')->paginate(10);
-        
+
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.ElQC.el_qc_rework', $data);
     }
@@ -1463,7 +1516,7 @@ class ElQC_Controller extends Controller
     public function elqcReworkExcel(Request $request)
     {
         $data['menu'] = 'elqc-setup';
-    
+
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
             ->select([
                 'elqc.*',
@@ -1480,7 +1533,9 @@ class ElQC_Controller extends Controller
                     ->select('elqcId', DB::raw('SUM(cell_qty) as total_cell_damage'))
                     ->groupBy('elqcId'),
                 'defect_sum',
-                'defect_sum.elqcId', '=', 'elqc.elqc_id'
+                'defect_sum.elqcId',
+                '=',
+                'elqc.elqc_id'
             )
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
             ->leftJoin('tbl_factory_production_setup_laravel as psl', 'psl.batchNo', '=', 'elqc.elqc_batchNo')
@@ -1491,7 +1546,7 @@ class ElQC_Controller extends Controller
             ->where('elqc.status', '0')
             //->where('elqc.rwrk_status', '1')
             ->orderBy('elqc.created_at', 'DESC');
-    
+
         // Apply Dynamic Filters
         if ($request->filled('createdBy')) {
             $query->where('elqc.created_by', $request->createdBy);
@@ -1514,12 +1569,12 @@ class ElQC_Controller extends Controller
         if ($request->filled('batchNo')) {
             $query->where('elqc.elqc_batchNo', $request->batchNo);
         }
-    
+
         // CORE LOGIC FIX: 
         // Kept ->get() exactly as you had it, but removed ->groupBy() because 
         // selecting 'elqc.*' with a groupBy('elqc.elqc_id') crashes SQL strict mode.
-        $AllLists = $query->groupBy('elqc.elqc_id')->get(); 
-    
+        $AllLists = $query->groupBy('elqc.elqc_id')->get();
+
         $fileName = 'pending_Rework_ELQC_report_' . date('Ymd_His') . '.csv';
         $headers = [
             "Content-type"        => "text/csv",
@@ -1528,15 +1583,15 @@ class ElQC_Controller extends Controller
             "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
             "Expires"             => "0"
         ];
-    
+
         $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'No of Cell Damage', 'Operator', 'Incharge'];
-    
-        $callback = function() use ($AllLists, $columns) {
+
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
             fputcsv($file, $columns);
-    
+
             foreach ($AllLists as $key => $row) {
                 $sl = $key + 1;
                 fputcsv($file, [
@@ -1546,7 +1601,7 @@ class ElQC_Controller extends Controller
                     $row->shiftdtl,
                     // CRITICAL SAFETY check: If 'bushing_barCode' isn't inside your select, 
                     // trying to read it directly crashes the stream with an 'Undefined Property' error.
-                    $row->bushing_barCode ?? $row->elqc_barcode ?? '-', 
+                    $row->bushing_barCode ?? $row->elqc_barcode ?? '-',
                     $row->elqc_source ?? 'Layout',
                     $row->wattage,
                     $row->cellSize,
@@ -1556,24 +1611,24 @@ class ElQC_Controller extends Controller
                     $row->elqc_incharge_name,
                 ]);
             }
-    
+
             fclose($file);
         };
-    
+
         // CRITICAL FIX: Your original code had this variable, but never returned it to the browser.
         return response()->stream($callback, 200, $headers);
     }
 
-    
+
     public function el_qc_damage(Request $request)
     {
         $data['menu'] = 'elqc-damage';
-    
+
         // Dropdown lookups (Optimized memory usage)
         $data['ShiftMaster'] = DB::table('hr_mstr_shift')->select('id', 'shift')->get();
         $data['userList'] = DB::table('mstr_emp')->select('id', 'fullname')->where('status', '1')->get();
         $data['batchList'] = DB::table('tbl_factory_bushing_laravel')->select('bushing_batchNo')->distinct()->get();
-    
+
         // Main Query
         $query = DB::table('tbl_factory_el_qc_laravel as elqc')
             ->select([
@@ -1600,9 +1655,11 @@ class ElQC_Controller extends Controller
                     ->select('elqcId', DB::raw('SUM(cell_qty) as total_cell_damage'))
                     ->groupBy('elqcId'),
                 'defect_sum',
-                'defect_sum.elqcId', '=', 'elqc.elqc_id'
+                'defect_sum.elqcId',
+                '=',
+                'elqc.elqc_id'
             )
-            
+
             // Exact original table connections
             ->join('tbl_factory_el_qc_defect_laravel as def', 'elqc.elqc_id', '=', 'def.elqcId')
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
@@ -1612,20 +1669,20 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id')
             ->leftJoin('mstr_emp as d', 'def.res_prsn', '=', 'd.id')
-            
+
             // Base Constraints
             ->where('elqc.status', '0')
-            
+
             // RESTORED YOUR EXACT LOGIC: Grouping by individual defect IDs
             ->groupBy('def.def_id', 'def.elqcId')
             ->orderBy('def.def_id', 'DESC');
-            
+
         // Dynamic Filters (Restored to check incharge for operator as per your original file)
         if ($request->filled('createdBy')) {
             $query->where('elqc.created_by', $request->createdBy);
         }
         if ($request->filled('operator')) {
-            $query->where('elqc.elqc_incharge', $request->operator); 
+            $query->where('elqc.elqc_incharge', $request->operator);
         }
         if ($request->filled('checker')) {
             $query->where('elqc.elqc_incharge', $request->checker);
@@ -1642,9 +1699,9 @@ class ElQC_Controller extends Controller
         if ($request->filled('batchNo')) {
             $query->where('elqc.elqc_batchNo', $request->batchNo);
         }
-    
+
         $data['AllELQCDamageLists'] = $query->paginate(10);
-        
+
         $data['PermittedMenuList'] = self::PermittedMenuList(request()->session()->get('empId'));
         return view('ProductionLineUp.ElQC.el_qc_damage', $data);
     }
@@ -1679,9 +1736,11 @@ class ElQC_Controller extends Controller
                     ->select('elqcId', DB::raw('SUM(cell_qty) as total_cell_damage'))
                     ->groupBy('elqcId'),
                 'defect_sum',
-                'defect_sum.elqcId', '=', 'elqc.elqc_id'
+                'defect_sum.elqcId',
+                '=',
+                'elqc.elqc_id'
             )
-            
+
             // Exact original table connections
             ->join('tbl_factory_el_qc_defect_laravel as def', 'elqc.elqc_id', '=', 'def.elqcId')
             ->leftJoin('hr_mstr_shift as sh', 'sh.id', '=', 'elqc.elqc_shift')
@@ -1691,20 +1750,20 @@ class ElQC_Controller extends Controller
             ->leftJoin('mstr_emp as b', 'elqc.elqc_incharge', '=', 'b.id')
             ->leftJoin('mstr_emp as c', 'elqc.created_by', '=', 'c.id')
             ->leftJoin('mstr_emp as d', 'def.res_prsn', '=', 'd.id')
-            
+
             // Base Constraints
             ->where('elqc.status', '0')
-            
+
             // RESTORED YOUR EXACT LOGIC: Grouping by individual defect IDs
             ->groupBy('def.def_id', 'def.elqcId')
             ->orderBy('def.def_id', 'DESC');
-            
+
         // Dynamic Filters (Restored to check incharge for operator as per your original file)
         if ($request->filled('createdBy')) {
             $query->where('elqc.created_by', $request->createdBy);
         }
         if ($request->filled('operator')) {
-            $query->where('elqc.elqc_incharge', $request->operator); 
+            $query->where('elqc.elqc_incharge', $request->operator);
         }
         if ($request->filled('checker')) {
             $query->where('elqc.elqc_incharge', $request->checker);
@@ -1721,10 +1780,10 @@ class ElQC_Controller extends Controller
         if ($request->filled('batchNo')) {
             $query->where('elqc.elqc_batchNo', $request->batchNo);
         }
-    
+
         $AllLists = $query->get();
 
-        
+
         $fileName = 'Damage_ELQC_report_' . date('Ymd_His') . '.csv';
         $headers = [
             "Content-type"        => "text/csv",
@@ -1734,12 +1793,12 @@ class ElQC_Controller extends Controller
             "Expires"             => "0"
         ];
 
-        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Cell No', 'Cell Quantity',	'Defect Reason', 'Defect Category',	'Resp. Machine', 'No of Cell Damage',	'Responsible Person', 'Operator', 'Incharge'];
+        $columns = ['SL No', 'Date', 'Time', 'Shift', 'Bar Code', 'Source', 'Watt', 'Cell Efficiency', 'Bus Bar', 'Cell No', 'Cell Quantity',    'Defect Reason', 'Defect Category',    'Resp. Machine', 'No of Cell Damage',    'Responsible Person', 'Operator', 'Incharge'];
 
         // 4. Create a callback to stream the data
-        $callback = function() use($AllLists, $columns) {
+        $callback = function () use ($AllLists, $columns) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel to recognize special characters correctly
             fputs($file, (chr(0xEF) . chr(0xBB) . chr(0xBF)));
 
@@ -1747,8 +1806,8 @@ class ElQC_Controller extends Controller
             fputcsv($file, $columns);
 
             // Write data rows
-            foreach ($AllLists as $key=>$row) {
-              $sl = $key+1;
+            foreach ($AllLists as $key => $row) {
+                $sl = $key + 1;
                 fputcsv($file, [
                     $sl,
                     \Carbon\Carbon::parse($row->elqc_date)->format('d/m/Y'),
@@ -1782,7 +1841,7 @@ class ElQC_Controller extends Controller
     {
         $rwrk_status = $request->input('rwrk_status');
         $rwrk_pg = $request->input('rwrk_pg');
-        if($rwrk_pg){
+        if ($rwrk_pg) {
             if ($rwrk_status == '1') {
                 DB::table('tbl_factory_el_qc_laravel')
                     ->where('elqc_id', $id)
@@ -1797,23 +1856,23 @@ class ElQC_Controller extends Controller
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
-                
+
                 // ── Step 1: Fetch the existing EL_QC record ──────────────────────────
-                    $existingQC = EL_QC::where('elqc_id', $id)->first();
+                $existingQC = EL_QC::where('elqc_id', $id)->first();
 
-                    if ($existingQC) {
+                if ($existingQC) {
 
-                        // ── Step 2: Copy EL_QC → EL_QC_RWRK ────────────────────────────
-                        $qcData = $existingQC->toArray();
-                        EL_QC_RWRK::create($qcData);
+                    // ── Step 2: Copy EL_QC → EL_QC_RWRK ────────────────────────────
+                    $qcData = $existingQC->toArray();
+                    EL_QC_RWRK::create($qcData);
 
-                        // ── Step 3: Fetch & copy all related EL_QC_Defect → EL_QC_Defect_RWRK ──
-                        $existingDefects = EL_QC_Defect::where('elqcId', $existingQC->elqc_id)->get();
+                    // ── Step 3: Fetch & copy all related EL_QC_Defect → EL_QC_Defect_RWRK ──
+                    $existingDefects = EL_QC_Defect::where('elqcId', $existingQC->elqc_id)->get();
 
-                        foreach ($existingDefects as $defect) {
-                            EL_QC_Defect_RWRK::create($defect->toArray());
-                        }
+                    foreach ($existingDefects as $defect) {
+                        EL_QC_Defect_RWRK::create($defect->toArray());
                     }
+                }
             } else {
                 DB::table('tbl_factory_el_qc_laravel')
                     ->where('elqc_id', $id)
@@ -1827,21 +1886,21 @@ class ElQC_Controller extends Controller
                     'updated_at' => now()
                 ]);
                 // EL_QC_Defect::where('elqcId', $id)->delete();
-            
+
                 $cell_positions = $request->input('cell_position', []);
                 $cell_qtys = $request->input('cell_qty', []);
                 $dmgMat_reasons = $request->input('dmgMat_reason', []);
                 $defect_categories = $request->input('dmgMat_cat', []);
                 $res_prsns = $request->input('res_prsn', []);
                 $res_machines = $request->input('res_machine', []);
-    
+
                 if (is_array($cell_positions) && count($cell_positions) > 0) {
                     foreach ($cell_positions as $i => $cell_no) {
                         // skip empty rows (optional)
                         if ($cell_no === null || $cell_no === '') {
                             continue;
                         }
-    
+
                         $defectData = array(
                             'elqcId' => $id,
                             'cell_no' => $cell_no,
@@ -1852,26 +1911,26 @@ class ElQC_Controller extends Controller
                             'res_machine' => $res_machines[$i] ?? null,
                             'status' => '0'
                         );
-    
+
                         EL_QC_Defect::create($defectData);
                     }
                 }
                 // ── Step 1: Fetch the existing EL_QC record ──────────────────────────
-                    $existingQC = EL_QC::where('elqc_id', $id)->first();
+                $existingQC = EL_QC::where('elqc_id', $id)->first();
 
-                    if ($existingQC) {
+                if ($existingQC) {
 
-                        // ── Step 2: Copy EL_QC → EL_QC_RWRK ────────────────────────────
-                        $qcData = $existingQC->toArray();
-                        EL_QC_RWRK::create($qcData);
+                    // ── Step 2: Copy EL_QC → EL_QC_RWRK ────────────────────────────
+                    $qcData = $existingQC->toArray();
+                    EL_QC_RWRK::create($qcData);
 
-                        // ── Step 3: Fetch & copy all related EL_QC_Defect → EL_QC_Defect_RWRK ──
-                        $existingDefects = EL_QC_Defect::where('elqcId', $existingQC->elqc_id)->get();
+                    // ── Step 3: Fetch & copy all related EL_QC_Defect → EL_QC_Defect_RWRK ──
+                    $existingDefects = EL_QC_Defect::where('elqcId', $existingQC->elqc_id)->get();
 
-                        foreach ($existingDefects as $defect) {
-                            EL_QC_Defect_RWRK::create($defect->toArray());
-                        }
+                    foreach ($existingDefects as $defect) {
+                        EL_QC_Defect_RWRK::create($defect->toArray());
                     }
+                }
             }
         } else {
             if ($rwrk_status == '1') {
@@ -1889,21 +1948,21 @@ class ElQC_Controller extends Controller
                     'updated_at' => now()
                 ]);
                 // EL_QC_Defect::where('elqcId', $id)->delete();
-            
+
                 $cell_positions = $request->input('cell_position', []);
                 $cell_qtys = $request->input('cell_qty', []);
                 $dmgMat_reasons = $request->input('dmgMat_reason', []);
                 $defect_categories = $request->input('dmgMat_cat', []);
                 $res_prsns = $request->input('res_prsn', []);
                 $res_machines = $request->input('res_machine', []);
-    
+
                 if (is_array($cell_positions) && count($cell_positions) > 0) {
                     foreach ($cell_positions as $i => $cell_no) {
                         // skip empty rows (optional)
                         if ($cell_no === null || $cell_no === '') {
                             continue;
                         }
-    
+
                         $defectData = array(
                             'elqcId' => $id,
                             'cell_no' => $cell_no,
@@ -1914,7 +1973,7 @@ class ElQC_Controller extends Controller
                             'res_machine' => $res_machines[$i] ?? null,
                             'status' => '0'
                         );
-    
+
                         EL_QC_Defect::create($defectData);
                     }
                 }
@@ -1932,10 +1991,10 @@ class ElQC_Controller extends Controller
                 ]);
             }
         }
-        if($rwrk_pg){
-        return redirect('production-lineup/el_qc')->with('success', 'El QC rework status updated successfully!');
+        if ($rwrk_pg) {
+            return redirect('production-lineup/el_qc')->with('success', 'El QC rework status updated successfully!');
         } else {
-        return redirect('production-lineup/el_qc_rework')->with('success', 'El QC rework status updated successfully!');
+            return redirect('production-lineup/el_qc_rework')->with('success', 'El QC rework status updated successfully!');
         }
     }
 
@@ -1966,14 +2025,14 @@ class ElQC_Controller extends Controller
             ->first();
         return response()->json(['defBatchId' => $data['bushingMaterial']]);
     }
-    
+
     public function fetchRFIDBar(Request $request)
     {
         $batchNo = $request->input('batch_No');
         $bushingNo = $request->input('bushingNo');
 
         $RFIDBardtls = DB::table('tbl_factory_bushing_laravel as bol')
-            ->select('bol.bushing_rfid','bol.bushing_barCode')
+            ->select('bol.bushing_rfid', 'bol.bushing_barCode')
             ->where('bol.bushing_batchNo', $batchNo)
             ->where('bol.bushing_id', $bushingNo)
             ->first();
