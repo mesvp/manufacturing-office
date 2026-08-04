@@ -1008,49 +1008,69 @@ class ElQC_Controller extends Controller
     public function store_el_qc(Request $request)
     {
         $demoId = date('YmdHis');
+        
+        $barCode = $request->input('barCode');
+                
+        // Check if valid serial number exists
+        $bExists = DB::table('factory_serial_number_details')
+          ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+          ->where('sl.Approve_status', 'APPROVE')
+          ->whereNull('factory_serial_number_details.status')
+          ->where('factory_serial_number_details.sl_no', $barCode)
+          ->exists();
+          
+          
+        if ($bExists) {
 
-        //Bushing Auto Entry
-        $exists = DB::table('tbl_factory_bushing_laravel')
-        ->where('bushing_barCode', request()->input('barCode'))
-        ->exists();
-        if ($exists == false) {
-            $data = array(
-            'bushing_id' => $demoId,
-            'bushing_date' => date('d-m-Y'),
-            'bushing_time' => date('H:i:s'),
-            'bushing_operator' => request()->input('operator'),
-            'bushing_batchNo' => request()->input('batchNo'),
-            'bushing_incherge' => request()->input('incharge'),
-            'bushing_shift' => request()->input('shift'),
-            'bushing_plant' => request()->input('plant'),
-            'bushing_logo' => 'Yes',
-            'bushing_hasDamage' => 'No',
-            'bushing_rfid' => request()->input('rfid'),
-            'bushing_barCode' => request()->input('barCode'),
-            'created_by' => request()->session()->get('empId')
-            );
-
-            $res = Bushing_Model::create($data);
-
-            $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
-
-            foreach ($materials as $material) {
+            //Bushing Auto Entry
+            $exists = DB::table('tbl_factory_bushing_laravel')
+            ->where('bushing_barCode', request()->input('barCode'))
+            ->exists();
+            if ($exists == false) {
                 $data = array(
-                    'bushingId' => $demoId,
-                    'prd_matId' => $material['material'],
-                    'status' => 'Yes'
+                'bushing_id' => $demoId,
+                'bushing_date' => date('d-m-Y'),
+                'bushing_time' => date('H:i:s'),
+                'bushing_operator' => request()->input('operator'),
+                'bushing_batchNo' => request()->input('batchNo'),
+                'bushing_incherge' => request()->input('incharge'),
+                'bushing_shift' => request()->input('shift'),
+                'bushing_plant' => request()->input('plant'),
+                'bushing_logo' => 'Yes',
+                'bushing_hasDamage' => 'No',
+                'bushing_rfid' => request()->input('rfid'),
+                'bushing_barCode' => request()->input('barCode'),
+                'created_by' => request()->session()->get('empId')
                 );
-
-                BushingMaterial_Model::create($data);
+    
+                $res = Bushing_Model::create($data);
+    
+                $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
+    
+                foreach ($materials as $material) {
+                    $data = array(
+                        'bushingId' => $demoId,
+                        'prd_matId' => $material['material'],
+                        'status' => 'Yes'
+                    );
+    
+                    BushingMaterial_Model::create($data);
+                }
+    
+                
             }
-
-            
         }
 
 
-        $Bexists = true;
+        // Check if valid serial number exists
+        $bExists = DB::table('factory_serial_number_details')
+          ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+          ->where('sl.Approve_status', 'APPROVE')
+          ->whereNull('factory_serial_number_details.status')
+          ->where('factory_serial_number_details.sl_no', $barCode)
+          ->exists();
 
-        if ($Bexists == true) {
+        if ($bExists == true) {
             $exists = DB::table('tbl_factory_el_qc_laravel')
                 ->where('elqc_barcode', request()->input('barCode'))
                 ->exists();
@@ -1235,7 +1255,7 @@ class ElQC_Controller extends Controller
                 return redirect('production-lineup/el_qc')->with('success', 'El QC data store failed! Duplicate Barcode.');
             }
         } else {
-            return redirect('production-lineup/el_qc')->with('success', 'El QC data store failed! Barcode not Passed in Layout Setup.');
+            return redirect('production-lineup/el_qc')->with('success', 'El QC data store failed! This Barcode not Valid or already Used.');
         }
     }
     

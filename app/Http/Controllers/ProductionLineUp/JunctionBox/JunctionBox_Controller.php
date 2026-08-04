@@ -1028,156 +1028,174 @@ class JunctionBox_Controller extends Controller
 
 
             $demoId = date('YmdHis');
-        
-            //Bushing Auto Entry
-            $exists = DB::table('tbl_factory_bushing_laravel')
-            ->where('bushing_barCode', request()->input('barCode'))
-            ->exists();
-            if ($exists == false) {
-                $data = array(
-                'bushing_id' => $demoId,
-                'bushing_date' => date('d-m-Y'),
-                'bushing_time' => date('H:i:s'),
-                'bushing_operator' => request()->input('operator'),
-                'bushing_batchNo' => request()->input('batchNo'),
-                'bushing_incherge' => request()->input('incharge'),
-                'bushing_shift' => request()->input('shift'),
-                'bushing_plant' => request()->input('plant'),
-                'bushing_logo' => 'Yes',
-                'bushing_hasDamage' => 'No',
-                'bushing_rfid' => request()->input('rfid'),
-                'bushing_barCode' => request()->input('barCode'),
-                'created_by' => request()->session()->get('empId')
-                );
-
-                $res = Bushing_Model::create($data);
-
-                $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
-
-                foreach ($materials as $material) {
+            
+            $barCode = $request->input('barCode');
+                
+            // Check if valid serial number exists
+            $bExists = DB::table('factory_serial_number_details')
+              ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+              ->where('sl.Approve_status', 'APPROVE')
+              ->whereNull('factory_serial_number_details.status')
+              ->where('factory_serial_number_details.sl_no', $barCode)
+              ->exists();
+              
+            if ($bExists) { 
+                //Bushing Auto Entry
+                $exists = DB::table('tbl_factory_bushing_laravel')
+                ->where('bushing_barCode', request()->input('barCode'))
+                ->exists();
+                if ($exists == false) {
                     $data = array(
-                        'bushingId' => $demoId,
-                        'prd_matId' => $material['material'],
-                        'status' => 'Yes'
+                    'bushing_id' => $demoId,
+                    'bushing_date' => date('d-m-Y'),
+                    'bushing_time' => date('H:i:s'),
+                    'bushing_operator' => request()->input('operator'),
+                    'bushing_batchNo' => request()->input('batchNo'),
+                    'bushing_incherge' => request()->input('incharge'),
+                    'bushing_shift' => request()->input('shift'),
+                    'bushing_plant' => request()->input('plant'),
+                    'bushing_logo' => 'Yes',
+                    'bushing_hasDamage' => 'No',
+                    'bushing_rfid' => request()->input('rfid'),
+                    'bushing_barCode' => request()->input('barCode'),
+                    'created_by' => request()->session()->get('empId')
                     );
-
-                    BushingMaterial_Model::create($data);
+    
+                    $res = Bushing_Model::create($data);
+    
+                    $materials = ProductSetUpMaterial_Model::where('batchNo',request()->input('batchNo'))->get();
+    
+                    foreach ($materials as $material) {
+                        $data = array(
+                            'bushingId' => $demoId,
+                            'prd_matId' => $material['material'],
+                            'status' => 'Yes'
+                        );
+    
+                        BushingMaterial_Model::create($data);
+                    }
+    
+                    
                 }
-
+    
+                //ELQC Auto Entry
                 
-            }
-
-            //ELQC Auto Entry
-            
-            //REWORK
-            $exists = DB::table('tbl_factory_el_qc_laravel')
-            ->where('elqc_barcode', request()->input('barCode'))
-            ->where('status', '<>', '1')
-            ->exists();
-            if ($exists == true) {
-                $qry = EL_QC::where('elqc_barcode',$request->input('barCode'));
-                $data = array(
-                    'status'        => '1',
-                    'rwrk_status'   => '1'
-                );
-
-                $res =  $qry->update($data);
-            }
-            
-            //Normal
-            $exists = DB::table('tbl_factory_el_qc_laravel')
-            ->where('elqc_barcode', request()->input('barCode'))
-            ->exists();
-            if ($exists == false) {
-
-                $data = array(
-                    'elqc_id'       => $demoId,
-                    'elqc_date'     => date('d-m-Y'),
-                    'elqc_time'     => date('H:i:s'),
-                    'elqc_operator' => $request->input('operator'),
-                    'elqc_source'   => 'Layup',
-                    'elqc_bushingNo' => $demoId,
-                    'elqc_batchNo'  => $request->input('batchNo'),
-                    'elqc_incharge' => $request->input('incharge'),
-                    'elqc_shift'    => $request->input('shift'),
-                    'elqc_plant'    => $request->input('plant'),
-                    'status'        => '1',
-                    'rwrk_status'   => '0',
-                    'elqc_rfid'     => $request->input('rfid'),
-                    'elqc_barcode'  => $request->input('barCode'),
-                    'created_by'    => $request->session()->get('empId')
-                );
-
-                $res = EL_QC::create($data);
-
-                EL_QC_History::create([
-                    'el_qc_id'   => $demoId,
-                    'action'     => 'Raised',
-                    'ip_address' => $this->getUserIP(),
-                    'created_by' => $request->session()->get('empId')
-                ]);
+                //REWORK
+                $exists = DB::table('tbl_factory_el_qc_laravel')
+                ->where('elqc_barcode', request()->input('barCode'))
+                ->where('status', '<>', '1')
+                ->exists();
+                if ($exists == true) {
+                    $qry = EL_QC::where('elqc_barcode',$request->input('barCode'));
+                    $data = array(
+                        'status'        => '1',
+                        'rwrk_status'   => '1'
+                    );
+    
+                    $res =  $qry->update($data);
+                }
                 
+                //Normal
+                $exists = DB::table('tbl_factory_el_qc_laravel')
+                ->where('elqc_barcode', request()->input('barCode'))
+                ->exists();
+                if ($exists == false) {
+    
+                    $data = array(
+                        'elqc_id'       => $demoId,
+                        'elqc_date'     => date('d-m-Y'),
+                        'elqc_time'     => date('H:i:s'),
+                        'elqc_operator' => $request->input('operator'),
+                        'elqc_source'   => 'Layup',
+                        'elqc_bushingNo' => $demoId,
+                        'elqc_batchNo'  => $request->input('batchNo'),
+                        'elqc_incharge' => $request->input('incharge'),
+                        'elqc_shift'    => $request->input('shift'),
+                        'elqc_plant'    => $request->input('plant'),
+                        'status'        => '1',
+                        'rwrk_status'   => '0',
+                        'elqc_rfid'     => $request->input('rfid'),
+                        'elqc_barcode'  => $request->input('barCode'),
+                        'created_by'    => $request->session()->get('empId')
+                    );
+    
+                    $res = EL_QC::create($data);
+    
+                    EL_QC_History::create([
+                        'el_qc_id'   => $demoId,
+                        'action'     => 'Raised',
+                        'ip_address' => $this->getUserIP(),
+                        'created_by' => $request->session()->get('empId')
+                    ]);
+                    
+                }
+    
+                //Ninetydegree QC Auto Entry
+                
+                //REWORK
+                $exists = DB::table('tbl_factory_ninetydeg_laravel')
+                ->where('ninetydeg_barcode', request()->input('barCode'))
+                ->where('status', '<>', '1')
+                ->exists();
+                if ($exists == true) {
+                    $qry = NinetyDeg_Model::where('ninetydeg_barcode',$request->input('barCode'));
+                    $data = array(
+                        'status'        => '1',
+                        'rwrk_status'   => '1'
+                    );
+    
+                    $res =  $qry->update($data);
+                }
+                
+                //Normal
+                $exists = DB::table('tbl_factory_ninetydeg_laravel')
+                ->where('ninetydeg_barcode', $request->input('barCode'))
+                ->exists();
+                if ($exists == false) {
+                
+                    $data = array(
+                        'ninetydeg_id'          => $demoId,
+                        'ninetydeg_date'        => date('d-m-Y'),
+                        'ninetydeg_time'        => date('H:i:s'),
+                        'ninetydeg_operator'    => $request->input('operator'),
+                        'ninetydeg_source'      => 'ELQC',
+                        'ninetydeg_laminatorNo' => $demoId,
+                        'ninetydeg_batchNo'     => $request->input('batchNo'),
+                        'ninetydeg_incharge'    => $request->input('incharge'),
+                        'ninetydeg_cycle_no'    => '1',
+                        'ninetydeg_shift'       => $request->input('shift'),
+                        'ninetydeg_plant'       => $request->input('plant'),
+                        'status'                => '1',
+                        'rwrk_status'           => '0',
+                        'ninetydeg_pDefectRsn'  => 'No Damage',
+                        'ninetydeg_rfid'        => $request->input('rfid'),
+                        'ninetydeg_barcode'     => $request->input('barCode'),
+                        'created_by'            => $request->session()->get('empId')
+                    );
+    
+                    $res = NinetyDeg_Model::create($data);
+    
+                    NinetyDegHist_Model::create([
+                        'ninetydeg_id' => $demoId,
+                        'action'       => 'Raised',
+                        'ip_address'   => $this->getUserIP(),
+                        'created_by'   => auth()->id()
+                    ]);
+    
+                }
             }
-
-            //Ninetydegree QC Auto Entry
             
-            //REWORK
-            $exists = DB::table('tbl_factory_ninetydeg_laravel')
-            ->where('ninetydeg_barcode', request()->input('barCode'))
-            ->where('status', '<>', '1')
-            ->exists();
-            if ($exists == true) {
-                $qry = NinetyDeg_Model::where('ninetydeg_barcode',$request->input('barCode'));
-                $data = array(
-                    'status'        => '1',
-                    'rwrk_status'   => '1'
-                );
-
-                $res =  $qry->update($data);
-            }
-            
-            //Normal
-            $exists = DB::table('tbl_factory_ninetydeg_laravel')
-            ->where('ninetydeg_barcode', $request->input('barCode'))
-            ->exists();
-            if ($exists == false) {
-            
-                $data = array(
-                    'ninetydeg_id'          => $demoId,
-                    'ninetydeg_date'        => date('d-m-Y'),
-                    'ninetydeg_time'        => date('H:i:s'),
-                    'ninetydeg_operator'    => $request->input('operator'),
-                    'ninetydeg_source'      => 'ELQC',
-                    'ninetydeg_laminatorNo' => $demoId,
-                    'ninetydeg_batchNo'     => $request->input('batchNo'),
-                    'ninetydeg_incharge'    => $request->input('incharge'),
-                    'ninetydeg_cycle_no'    => '1',
-                    'ninetydeg_shift'       => $request->input('shift'),
-                    'ninetydeg_plant'       => $request->input('plant'),
-                    'status'                => '1',
-                    'rwrk_status'           => '0',
-                    'ninetydeg_pDefectRsn'  => 'No Damage',
-                    'ninetydeg_rfid'        => $request->input('rfid'),
-                    'ninetydeg_barcode'     => $request->input('barCode'),
-                    'created_by'            => $request->session()->get('empId')
-                );
-
-                $res = NinetyDeg_Model::create($data);
-
-                NinetyDegHist_Model::create([
-                    'ninetydeg_id' => $demoId,
-                    'action'       => 'Raised',
-                    'ip_address'   => $this->getUserIP(),
-                    'created_by'   => auth()->id()
-                ]);
-
-            }
-
-            
-            $Bexists = true;
+            // Check if valid serial number exists
+            $bExists = DB::table('factory_serial_number_details')
+              ->leftJoin('factory_serial_numbers as sl', 'factory_serial_number_details.sl_id', '=', 'sl.id')
+              ->where('sl.Approve_status', 'APPROVE')
+              ->whereNull('factory_serial_number_details.status')
+              ->where('factory_serial_number_details.sl_no', $barCode)
+              ->exists();
+              
             $PreExists = true; 
             
-            if($Bexists == true && $PreExists == true){
+            if($bExists && $PreExists){
             
                 $exists = DB::table('tbl_factory_jb_laravel')
                   ->where('jb_barcode', $request->input('barCode'))
@@ -1267,7 +1285,7 @@ class JunctionBox_Controller extends Controller
                 }
             }else {
                    //$url = ;
-              return redirect('production-lineup/junctionbox')->with('success', ' Junction Box data stored faild! Barcode Not Passed in Either Layout Setup or Ninety Degree QC');
+              return redirect('production-lineup/junctionbox')->with('success', ' Junction Box data stored faild! This Barcode not Valid or already Used');
             }
         }
     }
